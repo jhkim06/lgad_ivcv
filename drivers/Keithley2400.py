@@ -1,7 +1,8 @@
 import numpy as np
 import pyvisa
 
-from gpibbase import GPIBBase
+from .gpibbase import GPIBBase
+#from . import gpibbase
 
 class Keithley2400(GPIBBase):
     _delay = 0.005
@@ -15,7 +16,7 @@ class Keithley2400(GPIBBase):
         rm = pyvisa.ResourceManager()
         self._inst = rm.open_resource(rname)
 
-        if '24' not in self.get_idn:
+        if '24' not in self.get_idn():
             print ('Incorrect device is assigned...')
             self._inst = []
 
@@ -23,6 +24,10 @@ class Keithley2400(GPIBBase):
 
         return 0
     
+    def close(self):
+        self._inst.close()
+        #return 0                  #FIXME
+   
     def initialize(self):
         self.onoff = 0
         self.write(":SOUR:VOLT:MODE FIXED")

@@ -1,3 +1,6 @@
+from matplotlib import animation as ani
+from matplotlib import pyplot as plt
+
 class FuncAnimationDisposable(ani.FuncAnimation):
     def __init__(self, fig, func, **kwargs):
         print("use custom FuncAnimation...")

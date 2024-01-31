@@ -4,8 +4,9 @@ import time
 import numpy as np
 import pylab as plt
 import pyvisa
+from .gpibbase import GPIBBase
 
-class Keithley6487():
+class Keithley6487(GPIBBase):
     def __init__(self, rname=None):
         if rname is not None:
             self.open()
@@ -20,6 +21,10 @@ class Keithley6487():
             return -1
 
         return 0
+    
+    def close(self):
+        self._inst.close()
+        #return 0                  #FIXME
     
     def set_zero(self):
         self.write("FUNC 'curr'")

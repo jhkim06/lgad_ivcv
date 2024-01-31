@@ -1,13 +1,17 @@
-from drivers import gpibbase
-from drivers import Keithley2400
-from drivers import Keithley6487
-from drivers import liveplot
+#import drivers.gpibbase
+from drivers.gpibbase import GPIBBase
+#from drivers import gpibbase
+from drivers.Keithley2400 import Keithley2400
+#import drivers.Keithley2400
+from drivers.Keithley6487 import Keithley6487
+#import drivers.Keithley6487
+from drivers.liveplot import FuncAnimationDisposable
+#import drivers.liveplot
 import os
 import sys
 import time
 import pathlib
-# from FuncAnimationDisposable import FuncAnimationDisposable
-import threading
+#import threading
 
 
 sys.path.append(pathlib.Path(__file__).parent.resolve())
@@ -62,7 +66,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     signal.signal(signal.SIGINT, handler)
 
     # Set range of voltage
-    npts = abs(int((vf-v1)/2))+1
+    npts = abs(int(vf-vi))+1
     Varr = np.linspace(vi, vf, npts)
     if return_sweep:
         Varr = np.concatenate([Varr, Varr[::-1]])
@@ -146,6 +150,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
         uniq += 1
 
     header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'            #FIXME
+    mkdir(os.path.join(cpath, f'{date}_{sensorname}'))
     np.savetxt(outfname+'.txt', arr, header=header) #FIXME
 
     ivplot(arr)
@@ -166,6 +171,7 @@ def ivplot(arr, yrange=None):
 
 if __name__=='__main__':
 
+    print('HI')
     init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR')
     measure_iv(smu, pau, vi=0, vf=-300, vstep=1, compliance=10e-6, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=False)
     plt.show()
