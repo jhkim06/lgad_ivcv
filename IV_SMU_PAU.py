@@ -1,5 +1,3 @@
-sys.path.append(pathlib.Path(__file__).parent.resolve())
-
 from drivers.gpibbase import GPIBBase
 from drivers.Keithley2400 import Keithley2400
 from drivers.Keithley6487 import Keithley6487
@@ -16,6 +14,7 @@ import signal
 from matplotlib import animation as ani
 from matplotlib import pyplot as plt
 from util import mkdir, getdate
+sys.path.append(pathlib.Path(__file__).parent.resolve())
 
 
 
@@ -109,6 +108,14 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
 
             return points,
 
+        fig_rt, ax_rt = plt.subplots()
+        ax_ratio_rt = ax_rt.twinx()
+        ax_rt.set_ylabel("Pad current")
+        ax_ratio_rt.set_ylabel("Pad current / Total current")
+        ax_ratio_rt.set_ylim(0.0, 1.0)
+        points, = ax_rt.plot([], [], 'o', color='black')
+        points_ratio, = ax_ratio_rt.plot([], [], 's', color='red')
+
         thread_measurement = threading.Thread(target=measure, args=(Varr, arr))
         thread_measurement.start()
 
@@ -151,7 +158,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     fname = f'IV_SMU+PAU_{sensorname}_{date}_{vi}_{vf}_pad{npad}'
     outfname = os.path.join(cpath, f'{date}_{sensorname}', fname)
     uniq = 1
-    while os.path.exists(outfname):
+    while os.path.exists(outfname+'.txt'):
         outfname = f'{outfname}_{uniq}'
         uniq += 1
 
@@ -179,6 +186,6 @@ if __name__=='__main__':
 
     print('HI')
     init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR')
-    measure_iv(smu, pau, vi=0, vf=-300, vstep=1, compliance=10e-6, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=False)
+    measure_iv(smu, pau, vi=0, vf=-50, vstep=1, compliance=10e-6, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
     plt.show()
 
