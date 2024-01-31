@@ -66,11 +66,12 @@ class Keithley2400(GPIBBase):
         self.sleep()
 
     def set_output(self, onoff):
-        if onoff:
+        if onoff=='on' or onoff=='On' or onoff=='ON':
             self.write(":OUTP ON")
-        else:
+        elif onoff=='off' or onoff=='Off' or onoff=='OFF':
             self.write(":OUTP OFF")
-
+        else:
+            print('Please input \'on\' or \'off\'')
         self.sleep()
 
     def set_source_voltage_ramp(self, v1):

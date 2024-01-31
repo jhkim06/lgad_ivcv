@@ -1,28 +1,21 @@
-#import drivers.gpibbase
+sys.path.append(pathlib.Path(__file__).parent.resolve())
+
 from drivers.gpibbase import GPIBBase
-#from drivers import gpibbase
 from drivers.Keithley2400 import Keithley2400
-#import drivers.Keithley2400
 from drivers.Keithley6487 import Keithley6487
-#import drivers.Keithley6487
 from drivers.liveplot import FuncAnimationDisposable
-#import drivers.liveplot
+
 import os
 import sys
 import time
 import pathlib
-#import threading
-
-
-sys.path.append(pathlib.Path(__file__).parent.resolve())
-
+import threading
 import numpy as np
 import pyvisa
-from matplotlib import pyplot as plt
 import signal
-from util import mkdir, getdate
-
 from matplotlib import animation as ani
+from matplotlib import pyplot as plt
+from util import mkdir, getdate
 
 
 
@@ -57,8 +50,8 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     # Safe escaper
     def handler(signum, frame):
         print("User interrupt... Turning off the output ...")
-        smu.write(':SOUR:VOLT:LEV 0')
-        smu.write('OUTP OFF')
+        smu.set_voltage(0)
+        smu.set_output('off')
         smu.close()
         pau.close()
         print("WARNING: Please make sure the output is turned off!")
@@ -73,68 +66,81 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     print(Varr)
 
     # Trun on the source meter
-    smu.write(':SOUR:VOLT:LEV 0')
-    smu.write('OUTP ON')
+    smu.set_voltage(0)
+    smu.set_output('on')
     time.sleep(1)
     print ("\n")
 
     # Read the data
     arr  = []
-    for V in Varr:
-        smu.write(f':SOUR:VOLT:LEV {V}')
 
-        Vsmu, Ismu = smu.query(':READ?').split(',')   #FIXME
-        Ipau, _, _ = pau.query('READ?').split(',')    #FIXME
+    if liveplot==True:
+        def init(): 
+            points.set_data([], [])
+            points_ratio.set_data([], [])
+            return points, points_ratio,
 
-        Vsmu = float(Vsmu)
-        Ismu = float(Ismu)
-        Ipau = float(Ipau[:-1])
+        def measure(Varr, arr):
+            for V in Varr:
+                smu.set_voltage(V)
+                Vsmu, Ismu = smu.read().split(',')
+                Ipau, _, _ = pau.read().split(',')
+                Vsmu = float(Vsmu)
+                Ismu = float(Ismu)
+                Ipau = float(Ipau[:-1])
+                print(V, Vsmu, Ismu, Ipau)
+                arr.append([V, Vsmu, Ismu, Ipau])
+
+        def animate(frame, arr):
+            # print('length ', len(arr))
+            if len(arr) > 0:
+                arr_t = np.array(arr).T
+                points.set_data(arr_t[0], arr_t[3])
+                ax_rt.relim()
+                ax_rt.autoscale()
+
+                ratio = arr_t[3]/arr_t[2]
+                points_ratio.set_data(arr_t[0], ratio)
+                ax_ratio_rt.relim()
+                ax_ratio_rt.autoscale(axis='x')
+
+            if len(arr) == len(Varr):
+                raise StopIteration
+
+            return points,
+
+        thread_measurement = threading.Thread(target=measure, args=(Varr, arr))
+        thread_measurement.start()
+
+        ani_ = FuncAnimationDisposable(fig_rt,
+                                       animate,
+                                       frames=None,
+                                       fargs=(arr,),
+                                       init_func=init,
+                                       blit=False,
+                                       repeat=False,
+                                       auto_close=True)
+        # ani_.save('test.gif', fps=30)
+        plt.show()
+
+    else:
+        for V in Varr:
+            smu.set_voltage(V)
+
+            Vsmu, Ismu = smu.read().split(',')   #FIXME
+            Ipau, _, _ = pau.read().split(',')    #FIXME
+
+            Vsmu = float(Vsmu)
+            Ismu = float(Ismu)
+            Ipau = float(Ipau[:-1])
         
-        print(V, Vsmu, Ismu, Ipau)
-        arr.append([V, Vsmu, Ismu, Ipau])
+            print(V, Vsmu, Ismu, Ipau)
+            arr.append([V, Vsmu, Ismu, Ipau])
 
-        # Draw live plot
-        if liveplot:
-            fig_rt, ax_rt = plt.subplots()
-            ax_ratio_rt = ax_rt.twinx()
-            ax_rt.set_ylabel("Pad current")
-            ax_ratio_rt.set_ylabel("Pad Current / Total current")
-            ax_ratio_rt.set_ylim(0.0, 1.0)
-            points, = ax_rt.plot([], [], 'o', color='black')
-            points_ratio, = ax_ratio_rt.plot([], [], 's', color='red')
-
-            def init():
-                points.set_data([], [])
-                points_ratio.set_data([], [])
-                return points, points_ratio,
-            def animate(frame, arr):
-                if len(arr) > 0:
-                    arr_t = np.array(arr).T
-                    points.set_data(arr_t[0], arr_t[3])
-                    ax_rt.relim()
-                    ax_rt.autoscale()
-
-                    ratio = arr_t[3]/arr_t[2]
-                    points_ratio.set_data(arr_t[0], ratio)
-                    ax_ratio_rt.relim()
-                    ax_ratio_rt.autoscale(axis='x')
-                if len(arr) == len(Varr):
-                    raise StopIteration
-
-                return points,
-            ani_ = FuncAnimationDisposable(fig_rt,
-                                           animate,
-                                           frames=None,
-                                           fargs=(arr,),
-                                           init_func=init,
-                                           blit=False,
-                                           repeat=False,
-                                           auto_close=True)
-            plt.show()
 
     # Turn off the source meters
-    smu.write(':SOUR:VOLT:LEV 0')
-    smu.write('OUTP OFF')
+    smu.set_voltage(0)
+    smu.set_output('off')
     smu.close()
     pau.close()
 
