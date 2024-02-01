@@ -29,7 +29,7 @@ class Keithley6487(GPIBBase):
     def set_zero(self):
         self.write("FUNC 'curr'")
         self.write("SYST:ZCH ON")
-        self.write("CURR:RANG 2e-9")
+        self.write("CURR:RANG 2e-6")
         self.write("INIT")
         self.write("SYST:ZCOR:STAT OFF")
         self.write("SYST:ZCOR:ACQ")
@@ -40,12 +40,32 @@ class Keithley6487(GPIBBase):
     def initialize(self):
         self.reset()
         self.set_zero()
+        self.write("SOUR:VOLT:STAT OFF")
+        self.write("SOUR:VOLT:RANG 500")
+        self.write("FORM:ELEM READ,UNIT,STAT,VSO")
 
     def get_current_range(self):
         self.query("CURR:RANGE?")
 
+    def set_voltage(self, V):
+        self.write(f":SOUR:VOLT {V}")
+        self.sleep()
+
     def set_current_range(self, I):
         self.write(f"CURR:RANGE {I}")
+
+    def set_current_limit(self, I):
+        self.write(f":SOUR:VOLT:ILIM {I}")
+        return 0
+
+    def set_output(self, onoff):
+        if onoff=='on' or onoff=='On' or onoff=='ON':
+            self.write(':SOUR:VOLT:STAT ON')
+        elif onoff=='off' or onoff=='Off' or onoff=='OFF':
+            self.write(':SOUR:VOLT:STAT OFF')
+        else:
+            print('Please input \'on\' or \'off\'')
+        self.sleep()
 
     """
     def plot_IV(self, varr, iarr, show=True, ofname=None):

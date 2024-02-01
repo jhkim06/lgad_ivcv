@@ -1,19 +1,23 @@
-from drivers import gpibbase
-from drivers import WayneKerr4300
-from drivers import Keithley6487
-from drivers import liveplot
+from drivers.gpibbase import GPIBBase
+from drivers.Keithley2400 import Keithley2400
+from drivers.Keithley6487 import Keithley6487
+from drivers.liveplot import FuncAnimationDisposable
+
 import os
-import numpy as np
-import pylab as plt
-import pyvisa
+import sys
 import time
+import pathlib
+import threading
+import numpy as np
+import pyvisa
 import signal
+from matplotlib import animation as ani
 import matplotlib as mp
+import pylab as plt
 from util import mkdir, getdate
 
 mp.rcParams.update({'font.size':15})
 
-date = getdate()
 
 def init(pau_addr, lcr_addr):
     global pau, lcr
@@ -24,30 +28,37 @@ def init(pau_addr, lcr_addr):
     pau.open(pau_addr)
     lcr.open(lcr_addr)
 
+    # Initialize source meters
     pau.initialize()
-    pau.write("CURR:RANGE 2e-5")
-    pau.write("SOUR:VOLT:STAT off")
-    pau.write("SOUR:VOLT:RANG 500")
-    pau.write("SOUR:VOLT:ILIM 2.5e-5")
-    pau.write("FORM:ELEM READ,UNIT,STAT,VSO")
+    pau.set_current_range(2e-5)
 
-    lcr.write
+    lcr.initialize()
+    lcr.set_dc_voltage(0)
+    lcr.write(":MEAS:FUNC2 R")    #FIXME
 
-
-
-
-def CFmeasurement(Vdc):
-    lcr.read_termination = '\n'
-    lcr.write_termination = '\n'
-
-    print(pau.query("*IDN?"))
-    print(lcr.query('*IDN?'))
+    # Communicate with source meters
+    pau.get_idn()
+    lcr.get_idn()
+    return pau, lcr
 
 
-    lcr.write(":MEAS:FUNC1 C")
-    lcr.write(":MEAS:FUNC2 R")
-    lcr.write(":MEAS:LEV 0.1")
-    lcr.write(":MEAS:V-BIAS 0V")
+def CFmeasurement(pau, lcr, vi, vf, vstep, f0, f1, lev_ac, sensorname, npad, liveplot):
+    pau.set_current_limit(10e-6)
+#    lcr.read_termination = '\n'     #FIXME
+#    lcr.write_termination = '\n'
+
+    # Safe escaper
+    def handler(signum, frame):
+        print ("User interrupt... Turning off the output ...")
+        pau.set_voltage(0)
+        pau.set_output('OFF')
+        pau.close()
+        lcr.set_output('OFF')
+        lcr.set_dc_voltage(0)
+        lcr.close()
+        print ("WARNING: Please make sure the output is turned off!")
+        exit(1)
+    signal.signal(signal.SIGINT, handler)
 
     ## C-F
     f0 = 20
@@ -59,14 +70,14 @@ def CFmeasurement(Vdc):
     RF_arr = []
 
     ## applying bias by increasing from 0
-    lcr.write(f":MEAS:V-BIAS {0}V")
-    lcr.write("meas:bias ON")
-    pau.write(":sour:volt 0")
-    pau.write(":sour:volt:stat on")
+    lcr.set_dc_voltage(0)
+    lcr.set_output('ON')
+    pau.set_voltage(0)
+    pau.set_output('ON')
     time.sleep(1)
+
     for V in np.linspace(0, Vdc, int(abs(0-Vdc)+1)):
-        pau.write(f":sour:volt {V}")
-        #lcr.write(f":MEAS:V-BIAS {V}V")
+        pau.set_voltage(V)
         time.sleep(0.1)
 
     pau.write(f":sour:volt {Vdc}")

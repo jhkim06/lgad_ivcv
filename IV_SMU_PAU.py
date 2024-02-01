@@ -14,7 +14,7 @@ import signal
 from matplotlib import animation as ani
 from matplotlib import pyplot as plt
 from util import mkdir, getdate
-sys.path.append(pathlib.Path(__file__).parent.resolve())
+#sys.path.append(pathlib.Path(__file__).parent.resolve())
 
 
 
@@ -64,7 +64,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
         Varr = np.concatenate([Varr, Varr[::-1]])
     print(Varr)
 
-    # Trun on the source meter
+    # Turn on the source meter
     smu.set_voltage(0)
     smu.set_output('on')
     time.sleep(1)
@@ -184,7 +184,6 @@ def ivplot(arr, yrange=None):
 
 if __name__=='__main__':
 
-    print('HI')
     init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR')
     measure_iv(smu, pau, vi=0, vf=-50, vstep=1, compliance=10e-6, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
     plt.show()

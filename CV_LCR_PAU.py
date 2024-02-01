@@ -1,66 +1,65 @@
-from drivers import gpibbase
-from drivers import WayneKerr4300
-from drivers import Keithley6487
-from drivers import liveplot
+from drivers.gpibbase import GPIBBase
+from drivers.Keithley2400 import Keithley2400
+from drivers.Keithley6487 import Keithley6487
+from drivers.liveplot import FuncAnimationDisposable
+
 import os
-import numpy as np
-import pylab as plt
-import pyvisa
+import sys
 import time
+import pathlib
+import threading
+import numpy as np
+import pyvisa
 import signal
+from matplotlib import animation as ani
 import matplotlib as mp
+import pylab as plt
 from util import mkdir, getdate
 
 mp.rcParams.update({'font.size':15})  #FIXME
+
 
 def init(pau_addr, lcr_addr):
     global pau, lcr
 
     # Connect to source meters
-#    rm = pyvisa.ResourceManager()
-#    rlist = rm.list_resources()
     pau = Keithley6487()
     lcr = WayneKerr4300()
     pau.open(pau_addr)
     lcr.open(lcr_addr)
 
+    # Initialize source meters
     pau.initialize()
-    pau.write("CURR:RANG 2e-6")
-    pau.write("SOUR:VOLT:STAT off")
-    pau.write("SOUR:VOLT:RANG 500")
-    pau.write("SOUR:VOLT:ILIM 2.5e-5")
-    pau.write("FORM:ELEM READ,UNIT,STAT,VSO")
 
-    lcr.write(":MEAS:NUM-OF-TESTS 1")
     lcr.initialize()
-    lcr.write(":MEAS:EQU-CCT PAR")
-    lcr.write(":MEAS:SPEED MED")
     lcr.set_dc_voltage(0)
-    lcr.set_freq(1000)
 
+    # Communicate with source meters
     pau.get_idn()
     lcr.get_idn()
     return pau, lcr
 
+
 def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sensorname, npad, liveplot):
-    #FIXME compliance?
-    lcr.read_termination  = '\n'  #FIXME
-    lcr.write_termination = '\n'
+    pau.set_current_limit(10e-6)
+#    lcr.read_termination  = '\n'  #FIXME
+#    lcr.write_termination = '\n'
 
     # Safe escaper
     def handler(signum, frame):
         print ("User interrupt... Turning off the output ...")
-        pau.write(":SOUR:VOLT:LEV 0")
-        pau.write(":SOUR:VOLT:LEV off")
-        lcr.write(":MEAS:BIAS OFF")
-        lcr.write(":MEAS:V-BIAS 0V")
+        pau.set_voltage(0)
+        pau.set_output('OFF')
+        pau.close()
+        lcr.set_output('OFF')
+        lcr.set_dc_voltage(0)
         lcr.close()
         print ("WARNING: Please make sure the output is turned off!")
         exit(1)
     signal.signal(signal.SIGINT, handler)
 
     # Set range of voltage
-    npts = abs(int((vf-v1)/2))+1
+    npts = abs(int(vf-vi))+1
     Varr = np.linspace(vi, vf, npts)
     if (v0 is not None) and (v1 is not None):   #FIXME
         if (v0 > vf) and (v1 > vf):
@@ -73,11 +72,12 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     print(Varr)
 
     # Turn on the source meter
-    pau.write(':SOUR:VOLT 0')
-    pau.write(':SOUR:VOLT:STAT ON')
-    lcr.write(':MEAS:V-BIAS 0V')
-    lcr.write('MEAS:BIAS ON')
-    lcr.set_level(lev_ac)     #FIXME  I can't find manual of Wayne kerr 4300
+    pau.set_voltage(0)
+    pau.set_output('ON')
+    lcr.set_output('ON')
+    lcr.set_level(lev_ac)     #FIXME
+    lcr.set_freq(freq)
+    print('frequency: '+freq)
     time.sleep(1)
 
     # Read the data
@@ -86,31 +86,32 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     CV_arr = []
     RV_arr = []
     t0 = time.time()
-    for Vdc in Varr:
-        if Vdc > 0:
-            print('Warning: Positive bias is not allowed. Set DC voltage to 0.')
-            Vdc = 0
 
-        pau.write(f':SOUR:VOLT {Vdc}')
-        time.sleep(0.01)
-        Ipau, stat_pau, Vpau = pau.query(':READ?').split(',')
+    if liveplot==True:
+        print('test')
+    else:
+        for V in Varr:
+            if V > 0:
+                print('Warning: Positive bias is not allowed. Set DC voltage to 0.')
+                V =0
+            pau.set_voltage(V)
+            time.sleep(0.01)
+            Ipau, stat_pau, Vpau = pau.read().split(',')
 
-        Vpau = float(Vpau)
-        Ipau = float(Ipau[:-1])
+            Vpau = float(Vpau)
+            Ipau = float(Ipau[:-1])
 
-        res = lcr.query('MEAS:TRIG?') #FIXME
-        C0, R0 = res.split(',')
-        try:                          #FIXME
-            C0 = float(C0)
-            R0 = float(R0)
-        except:
-            break
-        Vpau_arr.append(Vpau)
-        Ipau_arr.append(Ipau)
-        CV_arr.append(C0)
-        RV_arr.append(R0)
-
-        print(Vdc, Vpau, Ipau, C0, R0)
+            C0, R0 = lcr.read_lcr().split(',') #FIXME
+            try:                          #FIXME
+                C0 = float(C0)
+                R0 = float(R0)
+            except:
+                break
+            Vpau_arr.append(Vpau)
+            Ipau_arr.append(Ipau)
+            CV_arr.append(C0)
+            RV_arr.append(R0)
+            print(Vdc, Vpau, Ipau, C0, R0)
 
     t1 = time.time()
     if (v0 is not None) and (v1 is not None):
@@ -121,11 +122,10 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     print(f"   * Elapsed time = {t1-t0} s")
 
     # Turn off the source meters
-    pau.write(':SOUR:VOLT:STAT OFF')
-    pau.write(':SOUR:VOLT:STAT OFF')
+    pau.set_output('OFF')
     pau.close()
-    lcr.write(':MEAS:BIAS OFF')
-    lcr.write(':MEAS:V-BIAS 0V')
+    lcr.set_output('OFF')
+    lcr.set_dc_voltage(0)
     lcr.close()
 
     # Save the data
@@ -135,11 +135,12 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     fname = f'CV_LCR+PAU_{sensorname}_{date}_{vi}_{vf}_{freq}Hz_pad{npad}'
     outfname = os.path.join(cpath, f'{date}_{sensorname}', fname)
     uniq = 1
-    while os.path.exists(outfname):
+    while os.path.exists(outfname+'.txt'):
         outfname = f'{outfname}_{uniq}'
         uniq += 1
 
     header = 'Vpau(V)\tC(F)\tR(Ohm)\tIpau(A)'                  #FIXME
+    mkdir(os.path.join(cpath, f'{date}_{sensorname}'))
     np.savetxt(outfname+'.txt', np.array([Vpau_arr, CV_arr, RV_arr, Ipau_arr]).T, header=header) #FIXME
 
     cvplot(arr)
@@ -174,5 +175,5 @@ def cvplot(fname, freq=None):
 if __name__=='__main__':
 
     init(pau_addr='GPIB0::22::INSTR', lcr_addr='USB0::0x0B6A::0x5346::21436652::INSTR')
-    measure_cv(pau, lcr, vi=0, vf=-60, vstep=1, v0=None, v1=None, freq=1000, lev_ac=0.1, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
+    measure_cv(pau, lcr, vi=0, vf=-60, vstep=1, v0=None, v1=None, freq=1000, lev_ac=0.1, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=False)
     plt.show()
