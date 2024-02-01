@@ -29,7 +29,7 @@ class Keithley6487(GPIBBase):
     def set_zero(self):
         self.write("FUNC 'curr'")
         self.write("SYST:ZCH ON")
-        self.write("CURR:RANG 2e-6")
+        self.write("CURR:RANG 2e-9")
         self.write("INIT")
         self.write("SYST:ZCOR:STAT OFF")
         self.write("SYST:ZCOR:ACQ")
@@ -46,7 +46,7 @@ class Keithley6487(GPIBBase):
 
     def get_current_range(self):
         self.query("CURR:RANGE?")
-
+    
     def set_voltage(self, V):
         self.write(f":SOUR:VOLT {V}")
         self.sleep()

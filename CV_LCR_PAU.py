@@ -64,9 +64,9 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     Varr = np.linspace(vi, vf, npts)
     if (v0 is not None) and (v1 is not None):   #FIXME
         if (v0 > vf) and (v1 > vf):
-            VarrL = Varr[Varr > V2]
-            VarrH = Varr[Varr < V3]
-            VarrM = np.linspace(V2, V3, npts1)
+            VarrL = Varr[Varr > v0]
+            VarrH = Varr[Varr < v1]
+            VarrM = np.linspace(v0, v1, npts)
             Varr  = np.concatenate([VarrL, VarrM, VarrH])
     if return_sweep:
         Varr = np.concatenate([Varr, Varr[::-1]])
@@ -89,6 +89,10 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     t0 = time.time()
 
     if liveplot==True:
+        def init():
+            points.set_data([], [])
+            return points,
+
         def measure(Varr,
                     Vpau_arr,
                     Ipau_arr,
@@ -205,8 +209,8 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     outfname = os.path.join(cpath, f'{date}_{sensorname}', fname)
     uniq = 1
     while os.path.exists(outfname+'.txt'):
-        outfname = f'{outfname}_{uniq}'
         uniq += 1
+        outfname = f'{outfname}_{uniq}'
 
     header = 'Vpau(V)\tC(F)\tR(Ohm)\tIpau(A)'                  #FIXME
     mkdir(os.path.join(cpath, f'{date}_{sensorname}'))
@@ -244,5 +248,5 @@ def cvplot(fname, freq=None):
 if __name__=='__main__':
 
     init(pau_addr='GPIB0::22::INSTR', lcr_addr='USB0::0x0B6A::0x5346::21436652::INSTR')
-    measure_cv(pau, lcr, vi=0, vf=-60, vstep=1, v0=None, v1=None, freq=1000, lev_ac=0.1, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=False)
+    measure_cv(pau, lcr, vi=0, vf=-60, vstep=1, v0=-15, v1=-25, freq=1000, lev_ac=0.1, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
     plt.show()

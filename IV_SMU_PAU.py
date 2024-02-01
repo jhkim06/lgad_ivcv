@@ -185,6 +185,6 @@ def ivplot(arr, yrange=None):
 if __name__=='__main__':
 
     init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR')
-    measure_iv(smu, pau, vi=0, vf=-50, vstep=1, compliance=10e-6, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
+    measure_iv(smu, pau, vi=0, vf=-300, vstep=1, compliance=10e-6, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
     plt.show()
 

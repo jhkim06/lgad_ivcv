@@ -1,9 +1,9 @@
 import numpy as np
 import pyvisa
 
-from gpibbase import GPIBBase
+from .gpibbase import GPIBBase
 
-class WayneKerr4300():
+class WayneKerr4300(GPIBBase):
     def __init__(self, rname=None):
         if rname is not None: 
             self.open(rname)
@@ -19,13 +19,17 @@ class WayneKerr4300():
             print ('Incorrect device is assigned...')
             self.inst = []
             return -1
+    
+    def close(self):
+        self._inst.close()
+        #return 0                  #FIXME
 
     def initialize(self):
         self.onoff = 0
         self.reset()
         self.write(':MEAS:NUM-OF-TEST 1')
         self.write(':MEAS:FUNC1 C')
-        self.write(':MEAS:FUNC1 R')
+        self.write(':MEAS:FUNC2 R')
         self.write(':MEAS:LEV 0.1')
         self.write(':MEAS:EQU-CCT PAR')
         self.write(':MEAS:SPEED MED')
