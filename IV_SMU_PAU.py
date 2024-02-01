@@ -159,8 +159,8 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     outfname = os.path.join(cpath, f'{date}_{sensorname}', fname)
     uniq = 1
     while os.path.exists(outfname+'.txt'):
-        outfname = f'{outfname}_{uniq}'
         uniq += 1
+        outfname = f'{outfname}_{uniq}'
 
     header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'            #FIXME
     mkdir(os.path.join(cpath, f'{date}_{sensorname}'))
