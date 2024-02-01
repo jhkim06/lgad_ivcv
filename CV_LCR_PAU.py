@@ -1,6 +1,7 @@
 from drivers.gpibbase import GPIBBase
 from drivers.Keithley2400 import Keithley2400
 from drivers.Keithley6487 import Keithley6487
+from drivers.WayneKerr4300 import WayneKerr4300
 from drivers.liveplot import FuncAnimationDisposable
 
 import os
@@ -77,7 +78,7 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     lcr.set_output('ON')
     lcr.set_level(lev_ac)     #FIXME
     lcr.set_freq(freq)
-    print('frequency: '+freq)
+    print('frequency: '+str(freq))
     time.sleep(1)
 
     # Read the data
@@ -88,7 +89,75 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     t0 = time.time()
 
     if liveplot==True:
-        print('test')
+        def measure(Varr,
+                    Vpau_arr,
+                    Ipau_arr,
+                    CV_arr,
+                    RV_arr):
+             #print("START MEASURE")
+             for V in Varr:
+                if V > 0:
+                    print ("Warning: positive bias is not allowed. Set DC voltage to 0.")
+                    V = 0
+
+                pau.set_voltage(V)
+                try:
+                    # time.sleep(0.01)
+                    # pau.query_delay = 10
+                    Ipau, stat_pau, Vpau = pau.read().split(',')
+                except Exception as exception:
+                    print("++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                    print(type(exception).__name__)
+                    # print("SESSION #", pau.session)
+                    sys.exit(0)
+
+                Vpau = float(Vpau)
+                Ipau = float(Ipau[:-1])
+
+                res = lcr.read_lcr()
+                C0, R0 = lcr.read_lcr().split(',')
+                try:
+                    C0 = float(C0)
+                    R0 = float(R0)
+                except:
+                    break
+
+                Vpau_arr.append(Vpau)
+                Ipau_arr.append(Ipau)
+                CV_arr.append(C0)
+                RV_arr.append(R0)
+
+                print(V, Vpau, Ipau, C0, R0)
+        def animate(frame, Vpau, CV):
+            if len(Vpau) > 0:
+                points.set_data(Vpau, CV)
+                ax_rt.relim()
+                ax_rt.autoscale()
+
+            if len(Vpau) == len(Varr):
+                raise StopIteration
+            return points,
+
+        fig_rt, ax_rt = plt.subplots()
+        ax_rt.set_ylabel("Pad capacitance (F)")
+        points, = ax_rt.plot([], [], 'o', color='black')
+
+        thread_measurement = threading.Thread(target=measure,
+                                              args=(Varr,
+                                                    Vpau_arr,
+                                                    Ipau_arr,
+                                                    CV_arr,
+                                                    RV_arr))
+        thread_measurement.start()
+        ani_ = FuncAnimationDisposable(fig_rt,
+                                       animate,
+                                       frames=None,
+                                       fargs=(Vpau_arr, CV_arr,),
+                                       init_func=init,
+                                       blit=False,
+                                       repeat=False,
+                                       auto_close=True)
+        plt.show()
     else:
         for V in Varr:
             if V > 0:
@@ -111,7 +180,7 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
             Ipau_arr.append(Ipau)
             CV_arr.append(C0)
             RV_arr.append(R0)
-            print(Vdc, Vpau, Ipau, C0, R0)
+            print(V, Vpau, Ipau, C0, R0)
 
     t1 = time.time()
     if (v0 is not None) and (v1 is not None):
@@ -143,7 +212,7 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     mkdir(os.path.join(cpath, f'{date}_{sensorname}'))
     np.savetxt(outfname+'.txt', np.array([Vpau_arr, CV_arr, RV_arr, Ipau_arr]).T, header=header) #FIXME
 
-    cvplot(arr)
+    cvplot(outfname+'.txt', freq)
     plt.savefig(outfname+'.png')
 
 
