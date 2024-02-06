@@ -8,8 +8,8 @@ import matplotlib.animation as animation
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-import IV_SMU_PAU as IVMeasurement
-# import test_2 as live_plot
+# import IV_SMU_PAU as IVMeasurement
+import test_2 as live_plot
 import numpy as np
 
 
@@ -83,7 +83,7 @@ class FigureBase(QWidget):
             else:
                 raw_data = raw_data.T
                 self.xs = raw_data[0]
-                self.ys = raw_data[3]
+                self.ys = raw_data[1]
 
     def animate(self, event):
         self._before_drawing()  # update data
@@ -114,31 +114,45 @@ class LGADMeasurement(QDialog):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
 
+        # connect button to function
+        self.ui.pushButtonStartMeasurement.clicked.connect(self._measure)
+        # TODO set measurement_type by the current tab
+        # print(self.ui.tabWidget.currentWidget().objectName())
+        self.ui.tabWidget.currentChanged.connect(self._currentChanged)
+
+        # default measurement
         self.measurement_type = MeasurementType.IV[0]
-        self.ui.lineEditMeasurementType.setText(MeasurementType.IV[1])
-        self.ui.labelStatus.setText(MeasurementType.IV[1] + " Measurement")
-
-        self.ui.pushButtonMeasurementType.clicked.connect(self.dispmessage)
-        self.ui.pushButtonStartMeasurement.clicked.connect(self.measure)
-        self.measurement = IVMeasurement
-        self.sensor_name = "FBK"
-        self.initial_voltage = 0
-        self.final_voltage = -250
-        self.return_sweep = True
-        self.live_plot = True
-
+        self._init_options(None)
         self.w = None
 
         self.show()
 
-    def dispmessage(self):
-        measurement_type = (MeasurementType.IV[1], MeasurementType.CV[1], MeasurementType.CF[1])
-        measurement_name, ok = QInputDialog.getItem(self, "InputDialog", "List of Measurement",
-                                                    measurement_type, 0, False)
-        if ok and measurement_name:
-            self.ui.lineEditMeasurementType.setText(measurement_name)
-            self.ui.labelStatus.setText(measurement_name + " Measurement")
-            self.set_measurement_type(measurement_name)
+    def _init_options(self, measurement_type):
+
+        self.measurement = live_plot
+        self.sensor_name = "FBK"
+        self.initial_voltage = 0
+        self.final_voltage = 10
+        self.return_sweep = True
+        self.live_plot = True
+
+        self.ui.lineEditSensorName.setText(self.sensor_name)
+        self.ui.lineEditInitialVoltage.setText(str(self.initial_voltage))
+        self.ui.lineEditFinalVoltage.setText(str(self.final_voltage))
+        self.ui.checkBoxReturnSweep.setChecked(self.return_sweep)
+
+    def _currentChanged(self):
+        current_index = self.ui.tabWidget.currentIndex()
+        if current_index == 0:
+            self.measurement_type = MeasurementType.IV[0]
+            # TODO update self.measurement also
+        elif current_index == 1:
+            self.measurement_type = MeasurementType.CV[0]
+        elif current_index == 2:
+            self.measurement_type = MeasurementType.CF[0]
+        else:
+            self.measurement_type = MeasurementType.IV[0]
+            print("invalid index")
 
     def set_measurement_type(self, name):
         if name == MeasurementType.IV[1]:
@@ -150,13 +164,12 @@ class LGADMeasurement(QDialog):
         else:
             print(name, " is not a valid")
 
-    def measure(self):
+    def _measure(self):
 
-        smu, pau = self.measurement.init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR')
-        self.measurement.measure_iv(smu, pau,
-                                    vi=0, vf=-10,
-                                    vstep=1, compliance=10e-6,
-                                    return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
+        self.final_voltage = int(self.ui.lineEditFinalVoltage.text())
+        self.return_sweep = self.ui.checkBoxReturnSweep.isChecked()
+        self.measurement.measurement_thread(final_value=self.final_voltage,
+                                            return_sweep=self.return_sweep)
         self.w = FigureBase(self.measurement)
         # print("Measure...", self.measurement_type)
         # if live_plot == true,

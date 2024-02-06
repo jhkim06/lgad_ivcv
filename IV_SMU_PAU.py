@@ -19,6 +19,8 @@ from util import mkdir, getdate
 # TODO make this module using Class
 n_data_points = -1
 arr = []
+measurement_started = False
+measurement_finished = False
 
 
 def get_data():
@@ -31,8 +33,11 @@ def get_data():
 def init(smu_addr, pau_addr):
     global smu, pau
     global n_data_points, arr
+    global measurement_started, measurement_finished
     n_data_points = -1
     arr.clear()
+    measurement_started = False
+    measurement_finished = False
 
     # Connect to source meters
     smu = Keithley2400()
@@ -93,7 +98,9 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
             return points, points_ratio,
 
         def measure(Varr, arr):
+            global measurement_started, measurement_finished
             for V in Varr:
+                measurement_started = True
                 smu.set_voltage(V)
                 Vsmu, Ismu = smu.read().split(',')
                 Ipau, _, _ = pau.read().split(',')
@@ -102,6 +109,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
                 Ipau = float(Ipau[:-1])
                 print(V, Vsmu, Ismu, Ipau)
                 arr.append([V, Vsmu, Ismu, Ipau])
+            measurement_finished = True
 
         def animate(frame, arr):
             # print('length ', len(arr))
@@ -161,6 +169,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
 
     # FIXME make method to save results
     '''
+    while(len(arr) != n_data_points)
     # Turn off the source meters
     smu.set_voltage(0)
     smu.set_output('off')
