@@ -170,7 +170,10 @@ class LGADMeasurement(QDialog):
         self.return_sweep = self.ui.checkBoxReturnSweep.isChecked()
         self.measurement.measurement_thread(final_value=self.final_voltage,
                                             return_sweep=self.return_sweep)
-        self.w = FigureBase(self.measurement)
+        self.live_plot = self.ui.checkBoxLivePlot.isChecked()
+        if self.live_plot:
+            self.w = FigureBase(self.measurement)  # show live plot
+        # self.measurement.save_results()
         # print("Measure...", self.measurement_type)
         # if live_plot == true,
         # request data from live_plot and draw it

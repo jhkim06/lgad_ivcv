@@ -99,8 +99,8 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
 
         def measure(Varr, arr):
             global measurement_started, measurement_finished
+            measurement_started = True
             for V in Varr:
-                measurement_started = True
                 smu.set_voltage(V)
                 Vsmu, Ismu = smu.read().split(',')
                 Ipau, _, _ = pau.read().split(',')
