@@ -117,7 +117,7 @@ class LGADMeasurement(QDialog):
         self.ui.pushButtonStartMeasurement.clicked.connect(self._measure)
         # TODO set measurement_type by the current tab
         # print(self.ui.tabWidget.currentWidget().objectName())
-        self.ui.tabWidget.currentChanged.connect(self._currentChanged)
+        self.ui.tabWidget.currentChanged.connect(self._current_tab_changed)
         # self.get_list_of_resource()
         self.ui.comboBoxSMU.addItems(["GPIB0::25::INSTR", "GPIB0::22::INSTR"])
         self.ui.comboBoxPAU.addItems(["GPIB0::25::INSTR", "GPIB0::22::INSTR"])
@@ -135,15 +135,20 @@ class LGADMeasurement(QDialog):
         self.sensor_name = "FBK"
         self.initial_voltage = 0
         self.final_voltage = 10
+        self.voltage_step = 1
+        self.current_compliance = 1e-5
         self.return_sweep = True
         self.live_plot = True
 
         self.ui.lineEditSensorName.setText(self.sensor_name)
         self.ui.lineEditInitialVoltage.setText(str(self.initial_voltage))
         self.ui.lineEditFinalVoltage.setText(str(self.final_voltage))
+        self.ui.lineEditVoltageStep.setText(str(self.voltage_step))
+        self.ui.lineEditCurrentCompliance.setText(str(self.current_compliance))
         self.ui.checkBoxReturnSweep.setChecked(self.return_sweep)
+        self.ui.checkBoxLivePlot.setChecked(self.live_plot)
 
-    def _currentChanged(self):
+    def _current_tab_changed(self):
         current_index = self.ui.tabWidget.currentIndex()
         if current_index == 0:
             self.measurement_type = MeasurementType.IV[0]
@@ -168,11 +173,24 @@ class LGADMeasurement(QDialog):
 
     def _measure(self):
 
+        # update parameters before starting measurement
+        # TODO make as function
+        self.initial_voltage = int(self.ui.lineEditInitialVoltage.text())
         self.final_voltage = int(self.ui.lineEditFinalVoltage.text())
+        self.voltage_step = int(self.ui.lineEditVoltageStep.text())
+
+        # TODO make as function
+        number_str = self.ui.lineEditCurrentCompliance.text()
+        exponent = int(number_str.split('e')[1])
+        compliance = pow(10, exponent)
+        self.current_compliance = compliance
+
         self.return_sweep = self.ui.checkBoxReturnSweep.isChecked()
+        self.live_plot = self.ui.checkBoxLivePlot.isChecked()
+
         self.measurement.measurement_thread(final_value=self.final_voltage,
                                             return_sweep=self.return_sweep)
-        self.live_plot = self.ui.checkBoxLivePlot.isChecked()
+
         if self.live_plot:
             self.w = FigureBase(self.measurement)  # show live plot
         # self.measurement.save_results()
