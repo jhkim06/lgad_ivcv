@@ -17,11 +17,52 @@ import matplotlib as mp
 import pylab as plt
 from util import mkdir, getdate
 
-mp.rcParams.update({'font.size':15})  #FIXME
+mp.rcParams.update({'font.size': 15})  # FIXME
+
+
+# TODO make this module using Class
+n_data_points = -1
+Vpau_arr = []
+Ipau_arr = []
+CV_arr = []
+RV_arr = []
+_sensorname = ''
+_vi = 0
+_vf = -50
+_frequency = 1000
+_lev_ac = 0.1
+_npad = 1
+_return_sweep = False
+measurement_started = False
+measurement_finished = False
+thread_measurement = None
+
+
+def get_data():
+    if len(CV_arr) == n_data_points:
+        return None
+    else:
+        return CV_arr
+
+
+def get_list_of_resources():
+    rm = pyvisa.ResourceManager()
+    rlist = rm.list_resources()
+
+    return rlist
 
 
 def init(pau_addr, lcr_addr):
     global pau, lcr
+    global n_data_points
+    global measurement_started, measurement_finished
+    n_data_points = -1
+    Vpau_arr.clear()
+    Ipau_arr.clear()
+    CV_arr.clear()
+    RV_arr.clear()
+    measurement_started = False
+    measurement_finished = False
 
     # Connect to source meters
     pau = Keithley6487()
@@ -43,6 +84,13 @@ def init(pau_addr, lcr_addr):
 
 def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sensorname, npad, liveplot):
     pau.set_current_limit(10e-6)
+    global n_data_points, thread_measurement, _sensorname, _vi, _vf, _npad, _frequency, _lev_ac, _return_sweep
+    _sensorname = sensorname
+    _vi = vi
+    _vf = vf
+    _npad = npad
+    _frequency = freq
+    _return_sweep = return_sweep
 #    lcr.read_termination  = '\n'  #FIXME
 #    lcr.write_termination = '\n'
 
@@ -82,10 +130,6 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
     time.sleep(1)
 
     # Read the data
-    Vpau_arr = []      #FIXME
-    Ipau_arr = []
-    CV_arr = []
-    RV_arr = []
     t0 = time.time()
 
     if liveplot==True:
@@ -99,6 +143,8 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
                     CV_arr,
                     RV_arr):
              #print("START MEASURE")
+             global measurement_started, measurement_finished
+             measurement_started = True
              for V in Varr:
                 if V > 0:
                     print ("Warning: positive bias is not allowed. Set DC voltage to 0.")
@@ -132,6 +178,8 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
                 RV_arr.append(R0)
 
                 print(V, Vpau, Ipau, C0, R0)
+             measurement_finished = True
+
         def animate(frame, Vpau, CV):
             if len(Vpau) > 0:
                 points.set_data(Vpau, CV)
@@ -142,10 +190,6 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
                 raise StopIteration
             return points,
 
-        fig_rt, ax_rt = plt.subplots()
-        ax_rt.set_ylabel("Pad capacitance (F)")
-        points, = ax_rt.plot([], [], 'o', color='black')
-
         thread_measurement = threading.Thread(target=measure,
                                               args=(Varr,
                                                     Vpau_arr,
@@ -153,15 +197,21 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
                                                     CV_arr,
                                                     RV_arr))
         thread_measurement.start()
-        ani_ = FuncAnimationDisposable(fig_rt,
-                                       animate,
-                                       frames=None,
-                                       fargs=(Vpau_arr, CV_arr,),
-                                       init_func=init,
-                                       blit=False,
-                                       repeat=False,
-                                       auto_close=True)
-        plt.show()
+
+        if __name__ == "__main__":
+            fig_rt, ax_rt = plt.subplots()
+            ax_rt.set_ylabel("Pad capacitance (F)")
+            points, = ax_rt.plot([], [], 'o', color='black')
+
+            ani_ = FuncAnimationDisposable(fig_rt,
+                                           animate,
+                                           frames=None,
+                                           fargs=(Vpau_arr, CV_arr,),
+                                           init_func=init,
+                                           blit=False,
+                                           repeat=False,
+                                           auto_close=True)
+            plt.show()
     else:
         for V in Varr:
             if V > 0:
@@ -187,37 +237,44 @@ def measure_cv(pau, lcr, vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, sens
             print(V, Vpau, Ipau, C0, R0)
 
     t1 = time.time()
-    if (v0 is not None) and (v1 is not None):
-        print(f"   * Bias sweep of {npts} meas between {vi} and {vf} with {npts} meas between {v0} and {v1}")
-    else:
-        print(f"   * Bias sweep of {npts} meas between {vi} and {vf}")
-    print(f"   * Return sweep: {return_sweep}")
-    print(f"   * Elapsed time = {t1-t0} s")
 
-    # Turn off the source meters
-    pau.set_output('OFF')
-    pau.close()
-    lcr.set_output('OFF')
-    lcr.set_dc_voltage(0)
-    lcr.close()
 
-    # Save the data
-    date  = getdate()
-    cpath = r'C:\LGAD_test\C-V_test'
+    def save_results():
+        global Vpau_arr, CV_arr, RV_arr, Ipau_arr, _sensorname, _vi, _vf, _npad, _frequency, _return_sweep
+        npts = 0
+        v0 = 0
+        v1 = 1
+        if (v0 is not None) and (v1 is not None):
+            print(f"   * Bias sweep of {npts} meas between {_vi} and {_vf} with {npts} meas between {v0} and {v1}")
+        else:
+            print(f"   * Bias sweep of {npts} meas between {_vi} and {_vf}")
+        print(f"   * Return sweep: {_return_sweep}")
+        # print(f"   * Elapsed time = {t1-t0} s")
 
-    fname = f'CV_LCR+PAU_{sensorname}_{date}_{vi}_{vf}_{freq}Hz_pad{npad}'
-    outfname = os.path.join(cpath, f'{date}_{sensorname}', fname)
-    uniq = 1
-    while os.path.exists(outfname+'.txt'):
-        uniq += 1
-        outfname = f'{outfname}_{uniq}'
+        # Turn off the source meters
+        pau.set_output('OFF')
+        pau.close()
+        lcr.set_output('OFF')
+        lcr.set_dc_voltage(0)
+        lcr.close()
 
-    header = 'Vpau(V)\tC(F)\tR(Ohm)\tIpau(A)'                  #FIXME
-    mkdir(os.path.join(cpath, f'{date}_{sensorname}'))
-    np.savetxt(outfname+'.txt', np.array([Vpau_arr, CV_arr, RV_arr, Ipau_arr]).T, header=header) #FIXME
+        # Save the data
+        date  = getdate()
+        cpath = r'C:\LGAD_test\C-V_test'
 
-    cvplot(outfname+'.txt', freq)
-    plt.savefig(outfname+'.png')
+        fname = f'CV_LCR+PAU_{_sensorname}_{date}_{_vi}_{_vf}_{_frequency}Hz_pad{_npad}'
+        outfname = os.path.join(cpath, f'{date}_{_sensorname}', fname)
+        uniq = 1
+        while os.path.exists(outfname+'.txt'):
+            uniq += 1
+            outfname = f'{outfname}_{uniq}'
+
+        header = 'Vpau(V)\tC(F)\tR(Ohm)\tIpau(A)'                  #FIXME
+        mkdir(os.path.join(cpath, f'{date}_{_sensorname}'))
+        np.savetxt(outfname+'.txt', np.array([Vpau_arr, CV_arr, RV_arr, Ipau_arr]).T, header=header) #FIXME
+
+        cvplot(outfname+'.txt', freq)
+        plt.savefig(outfname+'.png')
 
 
 def cvplot(fname, freq=None):

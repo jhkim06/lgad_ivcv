@@ -19,8 +19,13 @@ from util import mkdir, getdate
 # TODO make this module using Class
 n_data_points = -1
 arr = []
+_sensorname = ''
+_vi = 0
+_vf = -50
+_npad = 1
 measurement_started = False
 measurement_finished = False
+thread_measurement = None
 
 
 def get_data():
@@ -29,6 +34,12 @@ def get_data():
     else:
         return arr
 
+
+def get_list_of_resources():
+    rm = pyvisa.ResourceManager()
+    rlist = rm.list_resources()
+
+    return rlist
 
 def init(smu_addr, pau_addr):
     global smu, pau
@@ -63,7 +74,11 @@ def init(smu_addr, pau_addr):
 
 def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, npad, liveplot):
     smu.set_current_limit(compliance)
-    global n_data_points
+    global n_data_points, thread_measurement, _sensorname, _vi, _vf, _npad, arr
+    _sensorname = sensorname
+    _vi = vi
+    _vf = vf
+    _npad = npad
     
     # Safe escaper
     def handler(signum, frame):
@@ -97,7 +112,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
             points_ratio.set_data([], [])
             return points, points_ratio,
 
-        def measure(Varr, arr):
+        def measure(Varr, arr_):
             global measurement_started, measurement_finished
             measurement_started = True
             for V in Varr:
@@ -108,13 +123,13 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
                 Ismu = float(Ismu)
                 Ipau = float(Ipau[:-1])
                 print(V, Vsmu, Ismu, Ipau)
-                arr.append([V, Vsmu, Ismu, Ipau])
+                arr_.append([V, Vsmu, Ismu, Ipau])
             measurement_finished = True
 
-        def animate(frame, arr):
+        def animate(frame, arr_):
             # print('length ', len(arr))
-            if len(arr) > 0:
-                arr_t = np.array(arr).T
+            if len(arr_) > 0:
+                arr_t = np.array(arr_).T
                 points.set_data(arr_t[0], arr_t[3])
                 ax_rt.relim()
                 ax_rt.autoscale()
@@ -124,7 +139,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
                 ax_ratio_rt.relim()
                 ax_ratio_rt.autoscale(axis='x')
 
-            if len(arr) == len(Varr):
+            if len(arr_) == len(Varr):
                 raise StopIteration
 
             return points,
@@ -167,9 +182,9 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
             arr.append([V, Vsmu, Ismu, Ipau])
 
 
-    # FIXME make method to save results
-    '''
-    while(len(arr) != n_data_points)
+def save_results():
+    global arr, _sensorname, _vi, _vf, _npad
+
     # Turn off the source meters
     smu.set_voltage(0)
     smu.set_output('off')
@@ -180,23 +195,25 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     date  = getdate()
     cpath = r'C:\LGAD_test\I-V_test'
 
-    fname = f'IV_SMU+PAU_{sensorname}_{date}_{vi}_{vf}_pad{npad}'
-    outfname = os.path.join(cpath, f'{date}_{sensorname}', fname)
+    fname = f'IV_SMU+PAU_{_sensorname}_{date}_{_vi}_{_vf}_pad{_npad}'
+    outfname = os.path.join(cpath, f'{date}_{_sensorname}', fname)
     uniq = 1
     while os.path.exists(outfname+'.txt'):
         uniq += 1
         outfname = f'{outfname}_{uniq}'
 
     header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'            #FIXME
-    mkdir(os.path.join(cpath, f'{date}_{sensorname}'))
+    mkdir(os.path.join(cpath, f'{date}_{_sensorname}'))
     np.savetxt(outfname+'.txt', arr, header=header) #FIXME
 
+    plt.figure()
     ivplot(arr)
     plt.savefig(outfname+'.png')
+    plt.close()
     plt.figure()
     ivplot(arr, yrange=(-2e-8, 0.5e-8))
     plt.savefig(outfname+'_zoom.png')
-    '''
+    plt.close()
 
 
 def ivplot(arr, yrange=None):
