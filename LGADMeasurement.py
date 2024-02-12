@@ -92,8 +92,7 @@ class FigureBase(QWidget):
             item['FIGURE'].clear()
             item['FIGURE'].grid(True)
 
-            item['FIGURE'].plot(self.xs,
-                                self.ys)
+            item['FIGURE'].plot(self.xs, self.ys)
 
     def pause(self):
         # self.ani.event_source.stop()
@@ -119,6 +118,9 @@ class LGADMeasurement(QDialog):
         # TODO set measurement_type by the current tab
         # print(self.ui.tabWidget.currentWidget().objectName())
         self.ui.tabWidget.currentChanged.connect(self._currentChanged)
+        # self.get_list_of_resource()
+        self.ui.comboBoxSMU.addItems(["GPIB0::25::INSTR", "GPIB0::22::INSTR"])
+        self.ui.comboBoxPAU.addItems(["GPIB0::25::INSTR", "GPIB0::22::INSTR"])
 
         # default measurement
         self.measurement_type = MeasurementType.IV[0]

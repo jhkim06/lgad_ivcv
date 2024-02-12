@@ -48,7 +48,7 @@ def init(smu_addr, pau_addr):
     # Initialize source meters
     smu.initialize()
     smu.set_voltage(0)
-    smu.set_voltage_range(200)    #FIXME
+    smu.set_voltage_range(200)  #FIXME
 #    smu.set_current_limit(10e-6)
 
     pau.reset()
@@ -73,7 +73,7 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
         smu.close()
         pau.close()
         print("WARNING: Please make sure the output is turned off!")
-        exit (1)
+        exit(1)
     signal.signal(signal.SIGINT, handler)
 
     # Set range of voltage

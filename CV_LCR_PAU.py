@@ -248,5 +248,7 @@ def cvplot(fname, freq=None):
 if __name__=='__main__':
 
     init(pau_addr='GPIB0::22::INSTR', lcr_addr='USB0::0x0B6A::0x5346::21436652::INSTR')
-    measure_cv(pau, lcr, vi=0, vf=-60, vstep=1, v0=-15, v1=-25, freq=1000, lev_ac=0.1, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
+    measure_cv(pau, lcr,
+               vi=0, vf=-60, vstep=1, v0=-15, v1=-25,
+               freq=1000, lev_ac=0.1, return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
     plt.show()
