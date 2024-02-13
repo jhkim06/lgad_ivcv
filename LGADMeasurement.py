@@ -11,12 +11,14 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 import IV_SMU_PAU as IVMeasurement
 import CV_LCR_PAU as CVMeasurement
 import numpy as np
+import pyvisa
+from enum import Enum
 
 
-class MeasurementType():
-    IV = (0, 'IV')
-    CV = (1, 'CV')
-    CF = (2, 'CF')
+class MeasurementType(Enum):
+    IV = 0
+    CV = 1
+    CF = 2
 
 
 class FigureBase(QWidget):
@@ -32,7 +34,7 @@ class FigureBase(QWidget):
         self._measurement = measurement
 
         self._init_draw()  # create sub plots and call FuncAnimation()
-        self._init_UI()
+        self._init_ui()
         self.show()
 
     def __del__(self):
@@ -42,7 +44,7 @@ class FigureBase(QWidget):
     def closeEvent(self, event):
         self.close()
 
-    def _init_UI(self):
+    def _init_ui(self):
         vbox = QVBoxLayout()
         vbox.addWidget(self.toolbar)
         vbox.addWidget(self.canvas)
@@ -74,9 +76,9 @@ class FigureBase(QWidget):
         raw_data = self._measurement.get_data()
         if raw_data is None:
             self.ani.event_source.stop()
-            self.close()
             # request to save results
             self._measurement.save_results()
+            self.close()
         else:
             raw_data = np.array(self._measurement.get_data())
             if len(raw_data) == 0:
@@ -109,6 +111,13 @@ class FigureBase(QWidget):
         super().close()
 
 
+def get_list_of_resources():
+    rm = pyvisa.ResourceManager()
+    rlist = rm.list_resources()
+
+    return rlist
+
+
 class LGADMeasurement(QDialog):
     def __init__(self):
         super().__init__()
@@ -118,65 +127,76 @@ class LGADMeasurement(QDialog):
         # connect button to function
         self.ui.pushButtonStartMeasurement.clicked.connect(self._measure)
         self.ui.pushButtonStartMeasurement_CV.clicked.connect(self._measure)
-        # TODO set measurement_type by the current tab
-        # print(self.ui.tabWidget.currentWidget().objectName())
         self.ui.tabWidget.currentChanged.connect(self._current_tab_changed)
-        # self.get_list_of_resource()
 
         # default measurement
-        self.measurement_type = MeasurementType.IV[0]
-        self.measurement = IVMeasurement
-        self.resource_list = self.measurement.get_list_of_resources()
-        self._init_options(self.measurement_type)
-        self._init_options(MeasurementType.CV[0])
+        self.measurement_type = MeasurementType.IV
+        self.measurement = None
+        self.resource_list = get_list_of_resources()
+        self.resource1_str = ''
+        self.resource2_str = ''
+        self._init_gui_options(self.measurement_type)  # set default options
+        self._init_gui_options(MeasurementType.CV)
         self.ui.tabWidget.setCurrentIndex(0)
         self.w = None
 
         self.show()
 
     def set_iv_gui(self):
-        self.ui.comboBoxSMU.addItems(self.resource_list)
-        self.ui.comboBoxPAU.addItems(self.resource_list)
-        self.ui.lineEditSensorName.setText(self.sensor_name)
-        self.ui.lineEditInitialVoltage.setText(str(self.initial_voltage))
-        self.ui.lineEditFinalVoltage.setText(str(self.final_voltage))
-        self.ui.lineEditVoltageStep.setText(str(self.voltage_step))
+
+        self.set_gui_options(self.ui.comboBoxSMU,
+                             self.ui.comboBoxPAU,
+                             self.ui.lineEditSensorName,
+                             self.ui.lineEditInitialVoltage,
+                             self.ui.lineEditFinalVoltage,
+                             self.ui.lineEditVoltageStep,
+                             self.ui.checkBoxReturnSweep,
+                             self.ui.checkBoxLivePlot)
         self.ui.lineEditCurrentCompliance.setText(str(self.current_compliance))
-        self.ui.checkBoxReturnSweep.setChecked(self.return_sweep)
-        self.ui.checkBoxLivePlot.setChecked(self.live_plot)
 
     def set_cv_gui(self):
-        self.ui.comboBoxLCR.addItems(self.resource_list)
-        self.ui.comboBoxPAU_CV.addItems(self.resource_list)
-        self.ui.lineEditSensorName_CV.setText(self.sensor_name)
-        self.ui.lineEditInitialVoltage_CV.setText(str(self.initial_voltage))
-        self.ui.lineEditFinalVoltage_CV.setText(str(self.final_voltage))
-        self.ui.lineEditVoltageStep_CV.setText(str(self.voltage_step))
+
+        self.set_gui_options(self.ui.comboBoxLCR,
+                             self.ui.comboBoxPAU_CV,
+                             self.ui.lineEditSensorName_CV,
+                             self.ui.lineEditInitialVoltage_CV,
+                             self.ui.lineEditFinalVoltage_CV,
+                             self.ui.lineEditVoltageStep_CV,
+                             self.ui.checkBoxReturnSweep_CV,
+                             self.ui.checkBoxLivePlot_CV)
         self.ui.lineEditFrequency_CV.setText(str(self.frequency))
         self.ui.lineEditLevAC.setText(str(self.lev_ac))
-        self.ui.checkBoxReturnSweep_CV.setChecked(self.return_sweep)
-        self.ui.checkBoxLivePlot_CV.setChecked(self.live_plot)
 
-    def _init_options(self, measurement_type):
+    def set_gui_options(self, combobox1, combobox2, sensor_name, initial_voltage, final_voltage,
+                        voltage_step, return_sweep, live_plot):
+
+        combobox1.addItems(self.resource_list)
+        combobox2.addItems(self.resource_list)
+        sensor_name.setText(self.sensor_name)
+        initial_voltage.setText(str(self.initial_voltage))
+        final_voltage.setText(str(self.final_voltage))
+        voltage_step.setText(str(self.voltage_step))
+        return_sweep.setChecked(self.return_sweep)
+        live_plot.setChecked(self.live_plot)
+
+    def _init_gui_options(self, measurement_type):
 
         self.sensor_name = "FBK"
         self.return_sweep = True
         self.live_plot = True
         self.voltage_step = 1
-        self.frequency = 1000
-        self.lev_ac = 0.1
 
-        if measurement_type == MeasurementType.IV[0]:
+        if measurement_type == MeasurementType.IV:
             self.initial_voltage = 0
             self.final_voltage = -250
             self.current_compliance = 1e-5
-
             self.set_iv_gui()
 
-        elif measurement_type == MeasurementType.CV[0]:
+        elif measurement_type == MeasurementType.CV:
             self.initial_voltage = 0
             self.final_voltage = -60
-
+            self.frequency = 1000
+            self.lev_ac = 0.1
             self.set_cv_gui()
         else:
             print("Unknown measurement type")
@@ -184,84 +204,82 @@ class LGADMeasurement(QDialog):
     def _current_tab_changed(self):
         current_index = self.ui.tabWidget.currentIndex()
         if current_index == 0:
-            self.measurement_type = MeasurementType.IV[0]
+            self.measurement_type = MeasurementType.IV
             self.measurement = IVMeasurement
         elif current_index == 1:
-            self.measurement_type = MeasurementType.CV[0]
+            self.measurement_type = MeasurementType.CV
             self.measurement = CVMeasurement
         elif current_index == 2:
-            self.measurement_type = MeasurementType.CF[0]
+            self.measurement_type = MeasurementType.CF
+            # TODO add CF measurement
         else:
-            self.measurement_type = MeasurementType.IV[0]
-            print("invalid index")
+            self.measurement_type = MeasurementType.IV
+            print("invalid measurement index, set IV measurement")
     
-    def set_measurement_type(self, name):
-        if name == MeasurementType.IV[1]:
-            self.measurement_type = MeasurementType.IV[0]
-        elif name == MeasurementType.CV[1]:
-            self.measurement_type = MeasurementType.CV[0]
-        elif name == MeasurementType.CF[1]:
-            self.measurement_type = MeasurementType.CF[0]
-        else:
-            print(name, " is not a valid")
+    def _get_gui_options(self, combobox1, combobox2, sensor_name, initial_voltage, final_voltage,
+                         voltage_step, return_sweep, live_plot):
+
+        self.resource1_str = combobox1.currentText()
+        self.resource2_str = combobox2.currentText()
+        self.sensor_name = sensor_name.text()
+        self.initial_voltage = int(initial_voltage.text())
+        self.final_voltage = int(final_voltage.text())
+        self.voltage_step = int(voltage_step.text())
+        self.return_sweep = return_sweep.isChecked()
+        self.live_plot = live_plot.isChecked()
 
     def _measure(self):
         print('cuurent type', self.measurement_type)
-        if self.measurement_type == MeasurementType.IV[0]:
-            print("IV measurment.......")
+        if self.measurement_type == MeasurementType.IV:
+            # print("IV measurment.......")
+            self.measurement = IVMeasurement
             # update parameters before starting measurement
-            smu_str = self.ui.comboBoxSMU.currentText()
-            pau_str = self.ui.comboBoxPAU.currentText()
-
-            # TODO make as function
-            self.sensor_name = self.ui.lineEditSensorName.text()
-            self.initial_voltage = int(self.ui.lineEditInitialVoltage.text())
-            self.final_voltage = int(self.ui.lineEditFinalVoltage.text())
-            self.voltage_step = int(self.ui.lineEditVoltageStep.text())
-            self.return_sweep = self.ui.checkBoxReturnSweep.isChecked()
-            self.live_plot = self.ui.checkBoxLivePlot.isChecked()
-
-            # TODO make as function
+            self._get_gui_options(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
+                                  self.ui.lineEditSensorName,
+                                  self.ui.lineEditInitialVoltage,
+                                  self.ui.lineEditFinalVoltage,
+                                  self.ui.lineEditVoltageStep,
+                                  self.ui.checkBoxReturnSweep,
+                                  self.ui.checkBoxLivePlot)
+            # TODO handle unexpected input cases ex. number string without 'e'
             number_str = self.ui.lineEditCurrentCompliance.text()
             exponent = int(number_str.split('e')[1])
             compliance = pow(10, exponent)
             self.current_compliance = compliance
 
-            smu, pau = self.measurement.init(smu_addr=smu_str, pau_addr=pau_str)
-            # if liveplot == True, a thread is used for measurement
-            self.measurement.measure_iv(smu, pau,
-                                        vi=0, vf=self.final_voltage,
+            self.measurement.init(smu_addr=self.resource1_str, pau_addr=self.resource2_str,
+                                  sensor_name=self.sensor_name)
+            # show out dir path
+            self.measurement.measure_iv(vi=0, vf=self.final_voltage,
                                         vstep=self.voltage_step, compliance=self.current_compliance,
                                         return_sweep=self.return_sweep,
-                                        sensorname=self.sensor_name,
                                         npad=1, liveplot=self.live_plot)
-        elif self.measurement_type == MeasurementType.CV[0]:
-            print("CV measurment.......")
-            lcr_str = self.ui.comboBoxLCR.currentText()
-            pau_str = self.ui.comboBoxPAU_CV.currentText()
-
-            # TODO make as function
-            self.sensor_name = self.ui.lineEditSensorName_CV.text()
-            self.initial_voltage = int(self.ui.lineEditInitialVoltage_CV.text())
-            self.final_voltage = int(self.ui.lineEditFinalVoltage_CV.text())
-            self.voltage_step = int(self.ui.lineEditVoltageStep_CV.text())
+        elif self.measurement_type == MeasurementType.CV:
+            # print("CV measurment.......")
+            self.measurement = CVMeasurement
+            self._get_gui_options(self.ui.comboBoxLCR, self.ui.comboBoxPAU_CV,
+                                  self.ui.lineEditSensorName_CV,
+                                  self.ui.lineEditInitialVoltage_CV,
+                                  self.ui.lineEditFinalVoltage_CV,
+                                  self.ui.lineEditVoltageStep_CV,
+                                  self.ui.checkBoxReturnSweep_CV,
+                                  self.ui.checkBoxLivePlot_CV)
             self.frequency = int(self.ui.lineEditFrequency_CV.text())
             self.lev_ac = float(self.ui.lineEditLevAC.text())
-            self.return_sweep = self.ui.checkBoxReturnSweep_CV.isChecked()
-            self.live_plot = self.ui.checkBoxLivePlot_CV.isChecked()
 
-            pau, lcr = self.measurement.init(pau_addr=pau_str, lcr_addr=lcr_str)
-            # if liveplot == True, a thread is used for measurement
-            self.measurement.measure_cv(pau, lcr,
-                                        vi=0, vf=self.final_voltage,
+            # self.measurement = CVMeasurement
+            self.measurement.init(pau_addr=self.resource2_str, lcr_addr=self.resource1_str,
+                                  sensor_name=self.sensor_name)
+            self.measurement.measure_cv(vi=0, vf=self.final_voltage,
                                         vstep=self.voltage_step, v0=-15, v1=-25,
                                         freq=self.frequency, lev_ac=self.lev_ac,
                                         return_sweep=self.return_sweep,
-                                        sensorname=self.sensor_name,
                                         npad=1, liveplot=self.live_plot)
 
+        result_path = self.measurement.get_out_dir_path()
+        self.ui.labelStatus.setText(result_path)
         if self.live_plot:
-            self.w = FigureBase(self.measurement)  # show live plot, it request to save results when finished
+            self.w = FigureBase(self.measurement)  # show live plot, it requests to save results when finished
         else:
             # request to save results
             self.measurement.save_results()

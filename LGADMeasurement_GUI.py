@@ -16,7 +16,7 @@ class Ui_Dialog(object):
         Dialog.setObjectName("Dialog")
         Dialog.resize(715, 424)
         self.tabWidget = QtWidgets.QTabWidget(Dialog)
-        self.tabWidget.setGeometry(QtCore.QRect(40, 30, 641, 351))
+        self.tabWidget.setGeometry(QtCore.QRect(40, 30, 641, 331))
         self.tabWidget.setObjectName("tabWidget")
         self.tabIV = QtWidgets.QWidget()
         self.tabIV.setObjectName("tabIV")
@@ -229,9 +229,13 @@ class Ui_Dialog(object):
         self.pushButtonStartMeasurement_CV.setObjectName("pushButtonStartMeasurement_CV")
         self.verticalLayout_3.addWidget(self.pushButtonStartMeasurement_CV)
         self.tabWidget.addTab(self.tabCV, "")
+        self.labelStatus = QtWidgets.QLabel(Dialog)
+        self.labelStatus.setGeometry(QtCore.QRect(40, 380, 611, 16))
+        self.labelStatus.setText("")
+        self.labelStatus.setObjectName("labelStatus")
 
         self.retranslateUi(Dialog)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):

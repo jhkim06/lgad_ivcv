@@ -19,13 +19,17 @@ from util import mkdir, getdate
 # TODO make this module using Class
 n_data_points = -1
 arr = []
-_sensorname = ''
+_sensor_name = ''
 _vi = 0
 _vf = -50
 _npad = 1
 measurement_started = False
 measurement_finished = False
 thread_measurement = None
+_smu = None
+_pau = None
+out_dir = ''
+date = None
 
 
 def get_data():
@@ -41,41 +45,50 @@ def get_list_of_resources():
 
     return rlist
 
-def init(smu_addr, pau_addr):
-    global smu, pau
+
+def get_out_dir_path():
+    global out_dir
+    return out_dir
+
+
+def init(smu_addr, pau_addr, sensor_name):
+    global _smu, _pau, _sensor_name
     global n_data_points, arr
     global measurement_started, measurement_finished
     n_data_points = -1
     arr.clear()
+    _sensor_name = sensor_name
     measurement_started = False
     measurement_finished = False
 
+    make_out_dir()
+
     # Connect to source meters
-    smu = Keithley2400()
-    pau = Keithley6487()
-    smu.open(smu_addr)
-    pau.open(pau_addr)
+    _smu = Keithley2400()
+    _pau = Keithley6487()
+    _smu.open(smu_addr)
+    _pau.open(pau_addr)
 
     # Initialize source meters
-    smu.initialize()
-    smu.set_voltage(0)
-    smu.set_voltage_range(200)  #FIXME
+    _smu.initialize()
+    _smu.set_voltage(0)
+    _smu.set_voltage_range(200)  # FIXME
 #    smu.set_current_limit(10e-6)
 
-    pau.reset()
-    pau.set_zero() # current range is double counted
-    #pau.set_current_range(f'auto')   #FIXME
+    _pau.reset()
+    _pau.set_zero() # current range is double counted
+    #pau.set_current_range(f'auto')   # FIXME
 
     # Communicate with source meters
-    smu.get_idn()
-    pau.get_idn()
-    return smu, pau
+    _smu.get_idn()
+    _pau.get_idn()
+    return _smu, _pau
 
 
-def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, npad, liveplot):
-    smu.set_current_limit(compliance)
-    global n_data_points, thread_measurement, _sensorname, _vi, _vf, _npad, arr
-    _sensorname = sensorname
+def measure_iv(vi, vf, vstep, compliance, return_sweep, npad, liveplot):
+    global n_data_points, thread_measurement, _sensor_name, _vi, _vf, _npad, arr
+    global _smu, _pau
+    _smu.set_current_limit(compliance)
     _vi = vi
     _vf = vf
     _npad = npad
@@ -83,10 +96,10 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     # Safe escaper
     def handler(signum, frame):
         print("User interrupt... Turning off the output ...")
-        smu.set_voltage(0)
-        smu.set_output('off')
-        smu.close()
-        pau.close()
+        _smu.set_voltage(0)
+        _smu.set_output('off')
+        _smu.close()
+        _pau.close()
         print("WARNING: Please make sure the output is turned off!")
         exit(1)
     signal.signal(signal.SIGINT, handler)
@@ -101,8 +114,8 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
     print(n_data_points)
 
     # Turn on the source meter
-    smu.set_voltage(0)
-    smu.set_output('on')
+    _smu.set_voltage(0)
+    _smu.set_output('on')
     time.sleep(1)
     print ("\n")
 
@@ -116,9 +129,9 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
             global measurement_started, measurement_finished
             measurement_started = True
             for V in Varr:
-                smu.set_voltage(V)
-                Vsmu, Ismu = smu.read().split(',')
-                Ipau, _, _ = pau.read().split(',')
+                _smu.set_voltage(V)
+                Vsmu, Ismu = _smu.read().split(',')
+                Ipau, _, _ = _pau.read().split(',')
                 Vsmu = float(Vsmu)
                 Ismu = float(Ismu)
                 Ipau = float(Ipau[:-1])
@@ -147,6 +160,8 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
         thread_measurement = threading.Thread(target=measure, args=(Varr, arr))
         thread_measurement.start()
 
+        # thread to save results?
+
         if __name__ == "__main__":
             fig_rt, ax_rt = plt.subplots()
             ax_ratio_rt = ax_rt.twinx()
@@ -169,10 +184,10 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
 
     else:
         for V in Varr:
-            smu.set_voltage(V)
+            _smu.set_voltage(V)
 
-            Vsmu, Ismu = smu.read().split(',')   #FIXME
-            Ipau, _, _ = pau.read().split(',')    #FIXME
+            Vsmu, Ismu = _smu.read().split(',')   #FIXME
+            Ipau, _, _ = _pau.read().split(',')    #FIXME
 
             Vsmu = float(Vsmu)
             Ismu = float(Ismu)
@@ -182,29 +197,33 @@ def measure_iv(smu, pau, vi, vf, vstep, compliance, return_sweep, sensorname, np
             arr.append([V, Vsmu, Ismu, Ipau])
 
 
+def make_out_dir():
+    global out_dir, date, _sensor_name
+    cpath = r'C:\LGAD_test\I-V_test'
+    date = getdate()
+    out_dir = os.path.join(cpath, f'{date}_{_sensor_name}')
+    mkdir(out_dir)
+    return out_dir
+
+
 def save_results():
-    global arr, _sensorname, _vi, _vf, _npad
+    global arr, _sensor_name, _vi, _vf, _npad, out_dir, date
 
     # Turn off the source meters
-    smu.set_voltage(0)
-    smu.set_output('off')
-    smu.close()
-    pau.close()
+    _smu.set_voltage(0)
+    _smu.set_output('off')
+    _smu.close()
+    _pau.close()
 
-    # Save the data
-    date  = getdate()
-    cpath = r'C:\LGAD_test\I-V_test'
-
-    fname = f'IV_SMU+PAU_{_sensorname}_{date}_{_vi}_{_vf}_pad{_npad}'
-    outfname = os.path.join(cpath, f'{date}_{_sensorname}', fname)
+    fname = f'IV_SMU+PAU_{_sensor_name}_{date}_{_vi}_{_vf}_pad{_npad}'
+    outfname = os.path.join(out_dir, fname)
     uniq = 1
     while os.path.exists(outfname+'.txt'):
         uniq += 1
         outfname = f'{outfname}_{uniq}'
 
-    header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'            #FIXME
-    mkdir(os.path.join(cpath, f'{date}_{_sensorname}'))
-    np.savetxt(outfname+'.txt', arr, header=header) #FIXME
+    header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'            # FIXME
+    np.savetxt(outfname+'.txt', arr, header=header)  # FIXME
 
     plt.figure()
     ivplot(arr)
@@ -229,8 +248,7 @@ def ivplot(arr, yrange=None):
 if __name__=='__main__':
 
     init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR')
-    measure_iv(smu, pau,
-               vi=0, vf=-30,
+    measure_iv(vi=0, vf=-30,
                vstep=1, compliance=10e-6,
                return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
     plt.show()
