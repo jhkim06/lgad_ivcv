@@ -37,19 +37,13 @@ lcr = None
 out_dir = ''
 date = None
 
+
 def get_data():
     if len(CV_arr) == n_data_points:
         return None
     else:
         out = np.column_stack((Vpau_arr, Ipau_arr, RV_arr, CV_arr))
         return out
-
-
-def get_list_of_resources():
-    rm = pyvisa.ResourceManager()
-    rlist = rm.list_resources()
-
-    return rlist
 
 
 def get_out_dir_path():

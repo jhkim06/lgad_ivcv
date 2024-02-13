@@ -39,13 +39,6 @@ def get_data():
         return arr
 
 
-def get_list_of_resources():
-    rm = pyvisa.ResourceManager()
-    rlist = rm.list_resources()
-
-    return rlist
-
-
 def get_out_dir_path():
     global out_dir
     return out_dir
