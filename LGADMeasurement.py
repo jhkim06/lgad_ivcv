@@ -3,6 +3,7 @@ from LGADMeasurement_GUI import *
 
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
+from PyQt5.QtGui import QIcon
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -283,6 +284,7 @@ class LGADMeasurement(QDialog):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('images/KCMS.jpeg'))
     w = LGADMeasurement()
     w.show()
     sys.exit(app.exec_())
