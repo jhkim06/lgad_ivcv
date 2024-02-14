@@ -132,7 +132,7 @@ class LGADMeasurement(QDialog):
         # default measurement
         self.measurement_type = MeasurementType.IV
         self.measurement = None
-        self.resource_list = get_list_of_resources()
+        self.resource_list = get_list_of_resources()  # FIXME better to request backend
         self.resource1_str = ''
         self.resource2_str = ''
         self._init_gui_options(self.measurement_type)  # set default options
@@ -141,43 +141,6 @@ class LGADMeasurement(QDialog):
         self.w = None
 
         self.show()
-
-    def set_iv_gui(self):
-
-        self.set_gui_options(self.ui.comboBoxSMU,
-                             self.ui.comboBoxPAU,
-                             self.ui.lineEditSensorName,
-                             self.ui.lineEditInitialVoltage,
-                             self.ui.lineEditFinalVoltage,
-                             self.ui.lineEditVoltageStep,
-                             self.ui.checkBoxReturnSweep,
-                             self.ui.checkBoxLivePlot)
-        self.ui.lineEditCurrentCompliance.setText(str(self.current_compliance))
-
-    def set_cv_gui(self):
-
-        self.set_gui_options(self.ui.comboBoxLCR,
-                             self.ui.comboBoxPAU_CV,
-                             self.ui.lineEditSensorName_CV,
-                             self.ui.lineEditInitialVoltage_CV,
-                             self.ui.lineEditFinalVoltage_CV,
-                             self.ui.lineEditVoltageStep_CV,
-                             self.ui.checkBoxReturnSweep_CV,
-                             self.ui.checkBoxLivePlot_CV)
-        self.ui.lineEditFrequency_CV.setText(str(self.frequency))
-        self.ui.lineEditLevAC.setText(str(self.lev_ac))
-
-    def set_gui_options(self, combobox1, combobox2, sensor_name, initial_voltage, final_voltage,
-                        voltage_step, return_sweep, live_plot):
-
-        combobox1.addItems(self.resource_list)
-        combobox2.addItems(self.resource_list)
-        sensor_name.setText(self.sensor_name)
-        initial_voltage.setText(str(self.initial_voltage))
-        final_voltage.setText(str(self.final_voltage))
-        voltage_step.setText(str(self.voltage_step))
-        return_sweep.setChecked(self.return_sweep)
-        live_plot.setChecked(self.live_plot)
 
     def _init_gui_options(self, measurement_type):
 
@@ -190,34 +153,68 @@ class LGADMeasurement(QDialog):
             self.initial_voltage = 0
             self.final_voltage = -250
             self.current_compliance = 1e-5
-            self.set_iv_gui()
+            self.set_iv_gui_options()
 
         elif measurement_type == MeasurementType.CV:
             self.initial_voltage = 0
             self.final_voltage = -60
             self.frequency = 1000
             self.lev_ac = 0.1
-            self.set_cv_gui()
+            self.set_cv_gui_options()
         else:
             print("Unknown measurement type")
+
+    def set_iv_gui_options(self):
+
+        self.set_common_gui_options(self.ui.comboBoxSMU,
+                                    self.ui.comboBoxPAU,
+                                    self.ui.lineEditSensorName,
+                                    self.ui.lineEditInitialVoltage,
+                                    self.ui.lineEditFinalVoltage,
+                                    self.ui.lineEditVoltageStep,
+                                    self.ui.checkBoxReturnSweep,
+                                    self.ui.checkBoxLivePlot)
+        self.ui.lineEditCurrentCompliance.setText(str(self.current_compliance))
+
+    def set_cv_gui_options(self):
+
+        self.set_common_gui_options(self.ui.comboBoxLCR,
+                                    self.ui.comboBoxPAU_CV,
+                                    self.ui.lineEditSensorName_CV,
+                                    self.ui.lineEditInitialVoltage_CV,
+                                    self.ui.lineEditFinalVoltage_CV,
+                                    self.ui.lineEditVoltageStep_CV,
+                                    self.ui.checkBoxReturnSweep_CV,
+                                    self.ui.checkBoxLivePlot_CV)
+        self.ui.lineEditFrequency_CV.setText(str(self.frequency))
+        self.ui.lineEditLevAC.setText(str(self.lev_ac))
+
+    def set_common_gui_options(self, combobox1, combobox2, sensor_name, initial_voltage, final_voltage,
+                               voltage_step, return_sweep, live_plot):
+
+        combobox1.addItems(self.resource_list)
+        combobox2.addItems(self.resource_list)
+        sensor_name.setText(self.sensor_name)
+        initial_voltage.setText(str(self.initial_voltage))
+        final_voltage.setText(str(self.final_voltage))
+        voltage_step.setText(str(self.voltage_step))
+        return_sweep.setChecked(self.return_sweep)
+        live_plot.setChecked(self.live_plot)
 
     def _current_tab_changed(self):
         current_index = self.ui.tabWidget.currentIndex()
         if current_index == 0:
             self.measurement_type = MeasurementType.IV
-            self.measurement = IVMeasurement
         elif current_index == 1:
             self.measurement_type = MeasurementType.CV
-            self.measurement = CVMeasurement
         elif current_index == 2:
             self.measurement_type = MeasurementType.CF
-            # TODO add CF measurement
         else:
             self.measurement_type = MeasurementType.IV
             print("invalid measurement index, set IV measurement")
     
-    def _get_gui_options(self, combobox1, combobox2, sensor_name, initial_voltage, final_voltage,
-                         voltage_step, return_sweep, live_plot):
+    def _get_common_gui_options(self, combobox1, combobox2, sensor_name, initial_voltage, final_voltage,
+                                voltage_step, return_sweep, live_plot):
 
         self.resource1_str = combobox1.currentText()
         self.resource2_str = combobox2.currentText()
@@ -234,13 +231,13 @@ class LGADMeasurement(QDialog):
             # print("IV measurment.......")
             self.measurement = IVMeasurement
             # update parameters before starting measurement
-            self._get_gui_options(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
-                                  self.ui.lineEditSensorName,
-                                  self.ui.lineEditInitialVoltage,
-                                  self.ui.lineEditFinalVoltage,
-                                  self.ui.lineEditVoltageStep,
-                                  self.ui.checkBoxReturnSweep,
-                                  self.ui.checkBoxLivePlot)
+            self._get_common_gui_options(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
+                                         self.ui.lineEditSensorName,
+                                         self.ui.lineEditInitialVoltage,
+                                         self.ui.lineEditFinalVoltage,
+                                         self.ui.lineEditVoltageStep,
+                                         self.ui.checkBoxReturnSweep,
+                                         self.ui.checkBoxLivePlot)
             # TODO handle unexpected input cases ex. number string without 'e'
             number_str = self.ui.lineEditCurrentCompliance.text()
             exponent = int(number_str.split('e')[1])
@@ -257,13 +254,13 @@ class LGADMeasurement(QDialog):
         elif self.measurement_type == MeasurementType.CV:
             # print("CV measurment.......")
             self.measurement = CVMeasurement
-            self._get_gui_options(self.ui.comboBoxLCR, self.ui.comboBoxPAU_CV,
-                                  self.ui.lineEditSensorName_CV,
-                                  self.ui.lineEditInitialVoltage_CV,
-                                  self.ui.lineEditFinalVoltage_CV,
-                                  self.ui.lineEditVoltageStep_CV,
-                                  self.ui.checkBoxReturnSweep_CV,
-                                  self.ui.checkBoxLivePlot_CV)
+            self._get_common_gui_options(self.ui.comboBoxLCR, self.ui.comboBoxPAU_CV,
+                                         self.ui.lineEditSensorName_CV,
+                                         self.ui.lineEditInitialVoltage_CV,
+                                         self.ui.lineEditFinalVoltage_CV,
+                                         self.ui.lineEditVoltageStep_CV,
+                                         self.ui.checkBoxReturnSweep_CV,
+                                         self.ui.checkBoxLivePlot_CV)
             self.frequency = int(self.ui.lineEditFrequency_CV.text())
             self.lev_ac = float(self.ui.lineEditLevAC.text())
 
