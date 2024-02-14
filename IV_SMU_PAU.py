@@ -14,7 +14,7 @@ import signal
 from matplotlib import animation as ani
 from matplotlib import pyplot as plt
 from util import mkdir, getdate
-#sys.path.append(pathlib.Path(__file__).parent.resolve())
+# sys.path.append(pathlib.Path(__file__).parent.resolve())
 
 # TODO make this module using Class
 n_data_points = -1
@@ -69,8 +69,8 @@ def init(smu_addr, pau_addr, sensor_name):
 #    smu.set_current_limit(10e-6)
 
     _pau.reset()
-    _pau.set_zero() # current range is double counted
-    #pau.set_current_range(f'auto')   # FIXME
+    _pau.set_zero()  # current range is double counted
+    # pau.set_current_range(f'auto')   # FIXME
 
     # Communicate with source meters
     _smu.get_idn()
@@ -99,18 +99,18 @@ def measure_iv(vi, vf, vstep, compliance, return_sweep, npad, liveplot):
 
     # Set range of voltage
     npts = abs(int(vf-vi))+1
-    Varr = np.linspace(vi, vf, npts)
+    v_arr = np.linspace(vi, vf, npts)
     if return_sweep:
-        Varr = np.concatenate([Varr, Varr[::-1]])
-    print(Varr)
-    n_data_points = len(Varr)
+        v_arr = np.concatenate([v_arr, v_arr[::-1]])
+    print(v_arr)
+    n_data_points = len(v_arr)
     print(n_data_points)
 
     # Turn on the source meter
     _smu.set_voltage(0)
     _smu.set_output('on')
     time.sleep(1)
-    print ("\n")
+    print("\n")
 
     if liveplot:
         def init(): 
@@ -118,10 +118,10 @@ def measure_iv(vi, vf, vstep, compliance, return_sweep, npad, liveplot):
             points_ratio.set_data([], [])
             return points, points_ratio,
 
-        def measure(Varr, arr_):
+        def measure(v_arr_, arr_):
             global measurement_started, measurement_finished
             measurement_started = True
-            for V in Varr:
+            for V in v_arr_:
                 _smu.set_voltage(V)
                 Vsmu, Ismu = _smu.read().split(',')
                 Ipau, _, _ = _pau.read().split(',')
@@ -145,12 +145,12 @@ def measure_iv(vi, vf, vstep, compliance, return_sweep, npad, liveplot):
                 ax_ratio_rt.relim()
                 ax_ratio_rt.autoscale(axis='x')
 
-            if len(arr_) == len(Varr):
+            if len(arr_) == len(v_arr):
                 raise StopIteration
 
             return points,
 
-        thread_measurement = threading.Thread(target=measure, args=(Varr, arr))
+        thread_measurement = threading.Thread(target=measure, args=(v_arr, arr))
         thread_measurement.start()
 
         # thread to save results?
@@ -176,7 +176,7 @@ def measure_iv(vi, vf, vstep, compliance, return_sweep, npad, liveplot):
             plt.show()
 
     else:
-        for V in Varr:
+        for V in v_arr:
             _smu.set_voltage(V)
 
             Vsmu, Ismu = _smu.read().split(',')   #FIXME
@@ -240,9 +240,8 @@ def ivplot(arr, yrange=None):
 
 if __name__=='__main__':
 
-    init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR')
+    init(smu_addr='GPIB0::25::INSTR', pau_addr='GPIB0::22::INSTR', sensor_name='FBK')
     measure_iv(vi=0, vf=-30,
                vstep=1, compliance=10e-6,
-               return_sweep=True, sensorname='FBK_2022v1_35_T9', npad=1, liveplot=True)
+               return_sweep=True, npad=1, liveplot=True)
     plt.show()
-

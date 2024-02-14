@@ -182,9 +182,9 @@ class LGADMeasurement(QDialog):
     def _init_gui_options(self, measurement_type):
 
         self.sensor_name = "FBK"
+        self.voltage_step = 1
         self.return_sweep = True
         self.live_plot = True
-        self.voltage_step = 1
 
         if measurement_type == MeasurementType.IV:
             self.initial_voltage = 0
@@ -267,7 +267,6 @@ class LGADMeasurement(QDialog):
             self.frequency = int(self.ui.lineEditFrequency_CV.text())
             self.lev_ac = float(self.ui.lineEditLevAC.text())
 
-            # self.measurement = CVMeasurement
             self.measurement.init(pau_addr=self.resource2_str, lcr_addr=self.resource1_str,
                                   sensor_name=self.sensor_name)
             self.measurement.measure_cv(vi=0, vf=self.final_voltage,
