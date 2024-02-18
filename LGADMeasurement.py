@@ -42,7 +42,7 @@ class FigureBase(QWidget):
         plt.close()
 
     # override figure close event from QWidget
-    def closeEvent(self, event):
+    def close_event(self, event):
         self.close()
 
     def _init_ui(self):
@@ -227,9 +227,9 @@ class LGADMeasurement(QDialog):
         self.live_plot = live_plot.isChecked()
 
     def _measure(self):
-        print('cuurent type', self.measurement_type)
+        print('current type', self.measurement_type)
         if self.measurement_type == MeasurementType.IV:
-            # print("IV measurment.......")
+            # print("IV measurement.......")
             self.measurement = IVMeasurement
             # update parameters before starting measurement
             self._get_common_gui_options(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
@@ -253,7 +253,7 @@ class LGADMeasurement(QDialog):
                                         return_sweep=self.return_sweep,
                                         npad=1, liveplot=self.live_plot)
         elif self.measurement_type == MeasurementType.CV:
-            # print("CV measurment.......")
+            # print("CV measurement.......")
             self.measurement = CVMeasurement
             self._get_common_gui_options(self.ui.comboBoxLCR, self.ui.comboBoxPAU_CV,
                                          self.ui.lineEditSensorName_CV,
