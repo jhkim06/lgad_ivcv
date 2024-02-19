@@ -96,7 +96,6 @@ def measure_cv(vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, npad, liveplot
 #    lcr.read_termination  = '\n'  # FIXME
 #    lcr.write_termination = '\n'
 
-
     # Safe escaper
     def handler(signum, frame):
         print("User interrupt... Turning off the output ...")
@@ -113,7 +112,7 @@ def measure_cv(vi, vf, vstep, v0, v1, freq, lev_ac, return_sweep, npad, liveplot
     # Set range of voltage
     npts = abs(int(vf-vi))+1
     Varr = np.linspace(vi, vf, npts)
-    if (v0 is not None) and (v1 is not None):   #FIXME
+    if (v0 is not None) and (v1 is not None):   # FIXME
         if (v0 > vf) and (v1 > vf):
             VarrL = Varr[Varr > v0]
             VarrH = Varr[Varr < v1]

@@ -192,7 +192,7 @@ class Ui_Dialog(object):
         self.horizontalLayout.addWidget(self.comboBoxSwitch)
 
         self.retranslateUi(Dialog)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
@@ -216,7 +216,7 @@ class Ui_Dialog(object):
         self.label_6.setText(_translate("Dialog", "Final Voltag (V)"))
         self.label_13.setText(_translate("Dialog", "Voltage Step"))
         self.label_14.setText(_translate("Dialog", "Frequency"))
-        self.label_15.setText(_translate("Dialog", "lev_ac"))
+        self.label_15.setText(_translate("Dialog", "AC Level"))
         self.checkBoxReturnSweep_CV.setText(_translate("Dialog", "Return Sweep"))
         self.checkBoxLivePlot_CV.setText(_translate("Dialog", "Live Plot"))
         self.pushButtonStartMeasurement_CV.setText(_translate("Dialog", "Start Measurement"))

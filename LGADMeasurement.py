@@ -160,7 +160,7 @@ class LGADMeasurement(QDialog):
             self.initial_voltage = 0
             self.final_voltage = -60
             self.frequency = 1000
-            self.lev_ac = 0.1
+            self.ac_level = 0.1
             self.set_cv_gui_options()
         else:
             print("Unknown measurement type")
@@ -188,7 +188,7 @@ class LGADMeasurement(QDialog):
                                     self.ui.checkBoxReturnSweep_CV,
                                     self.ui.checkBoxLivePlot_CV)
         self.ui.lineEditFrequency_CV.setText(str(self.frequency))
-        self.ui.lineEditLevAC.setText(str(self.lev_ac))
+        self.ui.lineEditLevAC.setText(str(self.ac_level))
 
     def set_common_gui_options(self, combobox1, combobox2, sensor_name, initial_voltage, final_voltage,
                                voltage_step, return_sweep, live_plot):
@@ -263,13 +263,13 @@ class LGADMeasurement(QDialog):
                                          self.ui.checkBoxReturnSweep_CV,
                                          self.ui.checkBoxLivePlot_CV)
             self.frequency = int(self.ui.lineEditFrequency_CV.text())
-            self.lev_ac = float(self.ui.lineEditLevAC.text())
+            self.ac_level = float(self.ui.lineEditLevAC.text())
 
             self.measurement.init(pau_addr=self.resource2_str, lcr_addr=self.resource1_str,
                                   sensor_name=self.sensor_name)
             self.measurement.measure_cv(vi=0, vf=self.final_voltage,
                                         vstep=self.voltage_step, v0=-15, v1=-25,
-                                        freq=self.frequency, lev_ac=self.lev_ac,
+                                        freq=self.frequency, lev_ac=self.ac_level,
                                         return_sweep=self.return_sweep,
                                         npad=1, liveplot=self.live_plot)
 

@@ -151,7 +151,7 @@ if __name__=='__main__':
     cftest()
 
     plt.show()
-opathroot = r'C:\LGAD_test\C-F_test' 
-sensorname = r'FBK_2022v1_2x2_34_T10'
+    opathroot = r'C:\LGAD_test\C-F_test'
+    sensorname = r'FBK_2022v1_2x2_34_T10'
     pau = rm.open_resource('GPIB0::22::INSTR')
     lcr = rm.open_resource('USB0::0x0B6A::0x5346::21436652::INSTR')
