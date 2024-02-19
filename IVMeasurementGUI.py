@@ -16,6 +16,8 @@ class IVMeasurementGUI:
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
 
+        # self.measurement = IVMeasurement()
+
     def set_combo_box_items(self, items):
         self.combo_box_smu.addItems(items)
         self.combo_box_pau.addItems(items)

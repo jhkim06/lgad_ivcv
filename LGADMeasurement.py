@@ -2,19 +2,15 @@ from PyQt5.QtWidgets import QDialog
 from LGADMeasurement_GUI import *
 
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import IV_SMU_PAU as IVMeasurement
 import CV_LCR_PAU as CVMeasurement
-import numpy as np
 import pyvisa
 from enum import Enum
 
+from LivePlotWindow import LivePlotWindow
 from IVMeasurementGUI import IVMeasurementGUI
 from CVMeasurementGUI import CVMeasurementGUI
 
@@ -23,96 +19,6 @@ class MeasurementType(Enum):
     IV = 0
     CV = 1
     CF = 2
-
-
-class FigureBase(QWidget):
-    def __init__(self, measurement):
-        super().__init__()
-
-        # Default Figure Setting
-        self._number_of_figures = 1
-        self._time_scale = 10
-        self.xs = list()
-        self.ys = list()
-
-        self._measurement = measurement
-
-        self._init_draw()  # create sub-plots and call FuncAnimation()
-        self._init_ui()
-        self.show()
-
-    def __del__(self):
-        plt.close()
-
-    # override figure close event from QWidget
-    def close_event(self, event):
-        self.close()
-
-    def _init_ui(self):
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.toolbar)
-        vbox.addWidget(self.canvas)
-        self.setLayout(vbox)
-        # self.setGeometry(400, 300, 400, 600)
-
-    def _init_draw(self):
-        # for PyQt embedding
-        self.fig = plt.Figure()
-        self.canvas = FigureCanvas(self.fig)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
-        # make figure list
-        self._plots = list()
-        for idx in range(0, self._number_of_figures):
-            # able to draw n row 1 col fig
-            self._plots.append({"FIGURE": self.fig.add_subplot(self._number_of_figures, 1, idx + 1),
-                                'INDEX': list()})
-            self._plots[idx]['FIGURE'].clear()
-
-        self.ani = animation.FuncAnimation(fig=self.fig,
-                                           func=self.animate,
-                                           interval=10,
-                                           blit=False,
-                                           save_count=100)
-        self.canvas.draw()
-
-    def _before_drawing(self):
-        raw_data = self._measurement.get_data()
-        if raw_data is None:
-            self.ani.event_source.stop()
-            # request to save results
-            self._measurement.save_results()
-            self.close()
-        else:
-            raw_data = np.array(self._measurement.get_data())
-            if len(raw_data) == 0:
-                self.xs = [0]
-                self.ys = [0]
-            else:
-                raw_data = raw_data.T
-                self.xs = raw_data[0]
-                self.ys = raw_data[3]  # NOTE input format!
-
-    def animate(self, event):
-        self._before_drawing()  # update data
-
-        for item in self._plots:
-            item['FIGURE'].clear()
-            item['FIGURE'].grid(True)
-
-            item['FIGURE'].plot(self.xs, self.ys)
-
-    def pause(self):
-        # self.ani.event_source.stop()
-        self.ani.pause()
-
-    def resume(self):
-        # self.ani.event_source.start()
-        self.ani.resume()
-
-    def close(self):
-        self.ani.event_source.stop()
-        super().close()
 
 
 def get_list_of_resources():
@@ -159,6 +65,7 @@ class LGADMeasurement(QDialog):
         self._init_gui_options(self.measurement_type)  # set default options
         self._init_gui_options(MeasurementType.CV)
         self.ui.tabWidget.setCurrentIndex(0)
+
         self.w = None
         self.live_plot = False
 
@@ -193,6 +100,7 @@ class LGADMeasurement(QDialog):
         print('current type', self.measurement_type)
         if self.measurement_type == MeasurementType.IV:
             # print("IV measurement.......")
+            # TODO self.iv_gui.request_measurement()
             self.measurement = IVMeasurement
             options = self.iv_gui.get()
 
@@ -222,7 +130,7 @@ class LGADMeasurement(QDialog):
         self.ui.labelStatus.setText(result_path)
 
         if self.live_plot:
-            self.w = FigureBase(self.measurement)  # show live plot, it requests to save results when finished
+            self.w = LivePlotWindow(self.measurement)  # show live plot, it requests to save results when finished
         else:
             # request to save results
             self.measurement.save_results()
