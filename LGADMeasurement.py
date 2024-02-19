@@ -153,9 +153,6 @@ class LGADMeasurement(QDialog):
                                        self.ui.checkBoxReturnSweep_CV, self.ui.checkBoxLivePlot_CV)
 
         # default measurement
-        # TODO class for measurement GUI
-        # self.IV_GUI
-        # backend object
         self.measurement_type = MeasurementType.IV
         self.measurement = None
         self.resource_list = get_list_of_resources()  # FIXME better to request backend
@@ -163,6 +160,7 @@ class LGADMeasurement(QDialog):
         self._init_gui_options(MeasurementType.CV)
         self.ui.tabWidget.setCurrentIndex(0)
         self.w = None
+        self.live_plot = False
 
         self.show()
 
@@ -196,7 +194,6 @@ class LGADMeasurement(QDialog):
         if self.measurement_type == MeasurementType.IV:
             # print("IV measurement.......")
             self.measurement = IVMeasurement
-            # update parameters before starting measurement
             options = self.iv_gui.get()
 
             self.measurement.init(smu_addr=options[0], pau_addr=options[1],
@@ -205,6 +202,8 @@ class LGADMeasurement(QDialog):
                                         vstep=options[5], compliance=options[6],
                                         return_sweep=options[7],
                                         npad=1, liveplot=options[8])
+            self.live_plot = options[8]
+
         elif self.measurement_type == MeasurementType.CV:
             # print("CV measurement.......")
             self.measurement = CVMeasurement
@@ -217,9 +216,11 @@ class LGADMeasurement(QDialog):
                                         freq=options[6], lev_ac=options[7],
                                         return_sweep=options[8],
                                         npad=1, liveplot=options[9])
+            self.live_plot = options[9]
 
         result_path = self.measurement.get_out_dir_path()
         self.ui.labelStatus.setText(result_path)
+
         if self.live_plot:
             self.w = FigureBase(self.measurement)  # show live plot, it requests to save results when finished
         else:
