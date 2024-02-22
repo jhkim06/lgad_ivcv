@@ -1,3 +1,7 @@
+import IV_SMU_PAU as IVMeasurement
+from LivePlotWindow import LivePlotWindow
+
+
 class IVMeasurementGUI:
 
     def __init__(self, combo_box_smu, combo_box_pau,
@@ -16,7 +20,7 @@ class IVMeasurementGUI:
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
 
-        # self.measurement = IVMeasurement()
+        self.measurement = IVMeasurement
 
     def set_combo_box_items(self, items):
         self.combo_box_smu.addItems(items)
@@ -97,3 +101,16 @@ class IVMeasurementGUI:
 
         return (smu, pau, sensor_name, initial_voltage, final_voltage, step,
                 compliance, return_sweep, live_plot)
+
+    def request_measurement(self):
+
+        self.measurement.init(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
+                              sensor_name=self.set_sensor_name())
+        self.measurement.measure_iv(vi=0, vf=self.get_final_voltage(),
+                                    vstep=self.get_voltage_step(), compliance=self.get_current_compliance(),
+                                    return_sweep=self.get_return_sweep(), npad=1, liveplot=self.get_live_plot())
+
+        if self.get_live_plot():
+            _ = LivePlotWindow(self.measurement)
+        else:
+            self.measurement.save_results()

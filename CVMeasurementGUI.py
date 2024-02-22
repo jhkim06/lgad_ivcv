@@ -1,3 +1,7 @@
+import CV_LCR_PAU as CVMeasurement
+from LivePlotWindow import LivePlotWindow
+
+
 class CVMeasurementGUI:
 
     def __init__(self, combo_box_lcr, combo_box_pau,
@@ -17,6 +21,8 @@ class CVMeasurementGUI:
         self.line_edit_ac_level = ac_level
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
+
+        self.measurement = CVMeasurement
 
     def set_combo_box_items(self, items):
         self.combo_box_lcr.addItems(items)
@@ -102,3 +108,17 @@ class CVMeasurementGUI:
 
         return (smu, pau, sensor_name, initial_voltage, final_voltage, step,
                 compliance, ac_level, return_sweep, live_plot)
+
+    def request_measurement(self):
+
+        self.measurement.init(pau_addr=self.get_pau_name(), lcr_addr=self.get_lcr_name(),
+                              sensor_name=self.get_sensor_name())
+        self.measurement.measure_cv(vi=0, vf=self.get_final_voltage(),
+                                    vstep=self.get_voltage_step(), v0=-15, v1=25,
+                                    freq=self.get_frequency(), lev_ac=self.get_ac_level(),
+                                    return_sweep=self.get_return_sweep(), npad=1, liveplot=self.get_live_plot())
+
+        if self.get_live_plot():
+            _ = LivePlotWindow(self.measurement)
+        else:
+            self.measurement.save_results()

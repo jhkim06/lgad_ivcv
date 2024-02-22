@@ -5,12 +5,9 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 
-import IV_SMU_PAU as IVMeasurement
-import CV_LCR_PAU as CVMeasurement
 import pyvisa
 from enum import Enum
 
-from LivePlotWindow import LivePlotWindow
 from IVMeasurementGUI import IVMeasurementGUI
 from CVMeasurementGUI import CVMeasurementGUI
 
@@ -42,8 +39,9 @@ class LGADMeasurement(QDialog):
         self.ui.tabWidget.currentChanged.connect(self._current_tab_changed)
 
         # TODO check if switch is available
-        self.ui.comboBoxSwitch.setEnabled(False)
-        self.ui.comboBoxSwitch.addItems(['1', '2', '3', '4'])
+        self.ui.comboBoxSwitch.setEnabled(True)
+        # TODO request available switches and show them in the combo box
+        self.ui.comboBoxSwitch.addItems(['1', '2', '3', '4', '2x2'])
 
         self.iv_gui = IVMeasurementGUI(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
                                        self.ui.lineEditSensorName,
@@ -60,14 +58,10 @@ class LGADMeasurement(QDialog):
 
         # default measurement
         self.measurement_type = MeasurementType.IV
-        self.measurement = None
         self.resource_list = get_list_of_resources()  # FIXME better to request backend
         self._init_gui_options(self.measurement_type)  # set default options
         self._init_gui_options(MeasurementType.CV)
         self.ui.tabWidget.setCurrentIndex(0)
-
-        self.w = None
-        self.live_plot = False
 
         self.show()
 
@@ -100,40 +94,15 @@ class LGADMeasurement(QDialog):
         print('current type', self.measurement_type)
         if self.measurement_type == MeasurementType.IV:
             # print("IV measurement.......")
-            # TODO self.iv_gui.request_measurement()
-            self.measurement = IVMeasurement
-            options = self.iv_gui.get()
-
-            self.measurement.init(smu_addr=options[0], pau_addr=options[1],
-                                  sensor_name=options[2])
-            self.measurement.measure_iv(vi=0, vf=options[4],
-                                        vstep=options[5], compliance=options[6],
-                                        return_sweep=options[7],
-                                        npad=1, liveplot=options[8])
-            self.live_plot = options[8]
+            # TODO if switch is available, loop over all switches
+            self.iv_gui.request_measurement()
 
         elif self.measurement_type == MeasurementType.CV:
             # print("CV measurement.......")
-            self.measurement = CVMeasurement
-            options = self.cv_gui.get()
+            self.cv_gui.request_measurement()
 
-            self.measurement.init(pau_addr=options[1], lcr_addr=options[0],
-                                  sensor_name=options[2])
-            self.measurement.measure_cv(vi=0, vf=options[4],
-                                        vstep=options[5], v0=-15, v1=-25,
-                                        freq=options[6], lev_ac=options[7],
-                                        return_sweep=options[8],
-                                        npad=1, liveplot=options[9])
-            self.live_plot = options[9]
-
-        result_path = self.measurement.get_out_dir_path()
-        self.ui.labelStatus.setText(result_path)
-
-        if self.live_plot:
-            self.w = LivePlotWindow(self.measurement)  # show live plot, it requests to save results when finished
-        else:
-            # request to save results
-            self.measurement.save_results()
+        # result_path = self.measurement.get_out_dir_path()
+        # self.ui.labelStatus.setText(result_path)
 
 
 if __name__ == "__main__":
