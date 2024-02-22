@@ -92,14 +92,18 @@ class LGADMeasurement(QDialog):
     
     def _measure(self):
         print('current type', self.measurement_type)
+        # TODO if switch is available, loop over all switches
+        current_gui = None
         if self.measurement_type == MeasurementType.IV:
             # print("IV measurement.......")
-            # TODO if switch is available, loop over all switches
-            self.iv_gui.request_measurement()
+            current_gui = self.iv_gui
 
         elif self.measurement_type == MeasurementType.CV:
             # print("CV measurement.......")
-            self.cv_gui.request_measurement()
+            current_gui = self.cv_gui
+        else:
+            pass
+        current_gui.request_measurement()
 
         # result_path = self.measurement.get_out_dir_path()
         # self.ui.labelStatus.setText(result_path)

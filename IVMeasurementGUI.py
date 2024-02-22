@@ -102,7 +102,7 @@ class IVMeasurementGUI:
         return (smu, pau, sensor_name, initial_voltage, final_voltage, step,
                 compliance, return_sweep, live_plot)
 
-    def request_measurement(self):
+    def request_measurement(self, switch=None):
 
         self.measurement.init(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
                               sensor_name=self.set_sensor_name())
