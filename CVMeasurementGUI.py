@@ -23,6 +23,7 @@ class CVMeasurementGUI:
         self.check_box_live_plot = check_box_live_plot
 
         self.measurement = CVMeasurement
+        self.w = None
 
     def set_combo_box_items(self, items):
         self.combo_box_lcr.addItems(items)
@@ -114,11 +115,11 @@ class CVMeasurementGUI:
         self.measurement.init(pau_addr=self.get_pau_name(), lcr_addr=self.get_lcr_name(),
                               sensor_name=self.get_sensor_name())
         self.measurement.measure_cv(vi=0, vf=self.get_final_voltage(),
-                                    vstep=self.get_voltage_step(), v0=-15, v1=25,
+                                    vstep=self.get_voltage_step(), v0=-15, v1=-25,
                                     freq=self.get_frequency(), lev_ac=self.get_ac_level(),
                                     return_sweep=self.get_return_sweep(), npad=1, liveplot=self.get_live_plot())
 
         if self.get_live_plot():
-            _ = LivePlotWindow(self.measurement)
+            self.w = LivePlotWindow(self.measurement)
         else:
             self.measurement.save_results()

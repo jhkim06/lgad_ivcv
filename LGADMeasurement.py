@@ -43,6 +43,7 @@ class LGADMeasurement(QDialog):
         # TODO request available switches and show them in the combo box
         self.ui.comboBoxSwitch.addItems(['1', '2', '3', '4', '2x2'])
 
+        # initialize GUI for each experiment
         self.iv_gui = IVMeasurementGUI(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
                                        self.ui.lineEditSensorName,
                                        self.ui.lineEditInitialVoltage, self.ui.lineEditFinalVoltage,

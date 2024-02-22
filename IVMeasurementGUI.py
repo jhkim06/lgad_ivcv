@@ -21,6 +21,7 @@ class IVMeasurementGUI:
         self.check_box_live_plot = check_box_live_plot
 
         self.measurement = IVMeasurement
+        self.w = None
 
     def set_combo_box_items(self, items):
         self.combo_box_smu.addItems(items)
@@ -111,6 +112,6 @@ class IVMeasurementGUI:
                                     return_sweep=self.get_return_sweep(), npad=1, liveplot=self.get_live_plot())
 
         if self.get_live_plot():
-            _ = LivePlotWindow(self.measurement)
+            self.w = LivePlotWindow(self.measurement)
         else:
             self.measurement.save_results()
