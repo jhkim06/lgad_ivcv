@@ -4,22 +4,8 @@ import os
 import signal
 import numpy as np
 import time
-import threading
 from util import mkdir, getdate
-
-
-class BaseThread(threading.Thread):
-    def __init__(self, target, args=(), callback=None, callback_args=()):
-        super().__init__(target=self.target_with_callback)
-        self.target = target
-        self.target_args = args
-        self.callback = callback
-        self.callback_args = callback_args
-
-    def target_with_callback(self):
-        self.target(*self.callback_args)
-        if self.callback is not None:
-            self.callback(*self.callback_args)
+from util import BaseThread
 
 
 class IVMeasurementBackend:
@@ -31,14 +17,15 @@ class IVMeasurementBackend:
         self.smu_address = smu_addr
         self.pau_address = pau_addr
         self.initial_voltage = 0
-        self.final_voltage = -50
-        self.voltage_step = 50
+        self.final_voltage = -250
+        self.voltage_step = 250
         self.data_points = -1
         self.pad_number = 1
         self.return_sweep = True
         self.live_plot = True
         self.current_compliance = 1e-5
 
+        self.measurement_arr = []
         self.output_arr = []
 
         self.out_txt_header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'
@@ -53,9 +40,10 @@ class IVMeasurementBackend:
 
     def initialize_measurement(self):
 
-        self.data_points = -1
+        self.measurement_arr.clear()
         self.output_arr.clear()
-        self.make_out_dir()
+        self.data_points = -1
+        self._make_out_dir()
 
         self.smu.open(self.smu_address)
         self.smu.initialize()
@@ -86,7 +74,7 @@ class IVMeasurementBackend:
         self.smu.close()
         self.pau.close()
         print("WARNING: Please make sure the output is turned off!")
-        exit()
+        exit(1)
 
     def _make_voltage_array(self):
         n_measurement_points = abs(int(self.final_voltage - self.initial_voltage)) + 1
@@ -107,7 +95,8 @@ class IVMeasurementBackend:
             current_smu = float(current_smu)
             current_pau = float(current_pau[:-1])
             print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
-            self.output_arr.append([voltage, voltage_smu, current_smu, current_pau])
+            self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
+            self.output_arr.append([voltage, current_pau])
 
     def start_measurement(self):
 
@@ -134,6 +123,7 @@ class IVMeasurementBackend:
         if len(self.output_arr) == self.n_measurement_points:
             return None
         else:
+            # TODO use generator?
             return self.output_arr
 
     def get_out_dir(self):
@@ -154,4 +144,4 @@ class IVMeasurementBackend:
             uniq += 1
             out_file_name = f'{out_file_name}_{uniq}'
 
-        np.savetxt(out_file_name + '.txt', self.output_arr, header=self.out_txt_header)
+        np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
