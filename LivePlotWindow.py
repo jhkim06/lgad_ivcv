@@ -60,8 +60,6 @@ class LivePlotWindow(QWidget):
         raw_data = self._measurement.get_data()
         if raw_data is None:
             self.ani.event_source.stop()
-            # request to save results
-            # self._measurement.save_results()
             self.close()
         else:
             raw_data = np.array(self._measurement.get_data())

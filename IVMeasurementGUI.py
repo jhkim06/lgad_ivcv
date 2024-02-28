@@ -108,7 +108,7 @@ class IVMeasurementGUI:
 
         # initialise measurement
         self.measurement.init(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
-                              sensor_name=self.set_sensor_name())
+                              sensor_name=self.get_sensor_name())
         # start measurement
         self.measurement.measure_iv(vi=0, vf=self.get_final_voltage(),
                                     vstep=self.get_voltage_step(), compliance=self.get_current_compliance(),
