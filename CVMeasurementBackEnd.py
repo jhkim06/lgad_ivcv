@@ -153,7 +153,17 @@ class CVMeasurementBackend:
                                             callback=self.save_results)
             measurement_thread.start()
         else:
-            pass
+            self._measure(voltage_array)
+            self.save_results()
+
+    def get_data(self):
+        if len(self.output_arr) == self.n_measurement_points:
+            return None
+        else:
+            return self.output_arr
+
+    def get_out_dir(self):
+        return self.out_dir_path
 
     def save_results(self):
         # TODO use verbose level
