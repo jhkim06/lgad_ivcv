@@ -152,6 +152,7 @@ def measure_iv(vi, vf, vstep, compliance, return_sweep, npad, liveplot):
 
         thread_measurement = threading.Thread(target=measure, args=(v_arr, arr))
         thread_measurement.start()
+        # call back!!
 
         # thread to save results?
 

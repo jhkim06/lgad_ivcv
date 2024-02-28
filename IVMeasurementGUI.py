@@ -20,6 +20,7 @@ class IVMeasurementGUI:
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
 
+        # IVMeasurement()
         self.measurement = IVMeasurement
         self.w = None
 
@@ -105,13 +106,16 @@ class IVMeasurementGUI:
 
     def request_measurement(self, switch=None):
 
+        # initialise measurement
         self.measurement.init(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
                               sensor_name=self.set_sensor_name())
+        # start measurement
         self.measurement.measure_iv(vi=0, vf=self.get_final_voltage(),
                                     vstep=self.get_voltage_step(), compliance=self.get_current_compliance(),
                                     return_sweep=self.get_return_sweep(), npad=1, liveplot=self.get_live_plot())
 
         if self.get_live_plot():
+            # FIXME save within backend process
             self.w = LivePlotWindow(self.measurement)
         else:
             self.measurement.save_results()
