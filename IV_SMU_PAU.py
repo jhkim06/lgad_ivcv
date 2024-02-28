@@ -32,6 +32,20 @@ out_dir = ''
 date = None
 
 
+class BaseThread(threading.Thread):
+    def __init__(self, callback=None, callback_args=None, *args, **kwargs):
+        target = kwargs.pop('target')
+        super(BaseThread, self).__init__(target=self.target_with_callback, *args, **kwargs)
+        self.callback = callback
+        self.method = target
+        self.callback_args = callback_args
+
+    def target_with_callback(self):
+        self.method()
+        if self.callback is not None:
+            self.callback(*self.callback_args)
+
+
 def get_data():
     if len(arr) == n_data_points:
         return None
@@ -150,9 +164,9 @@ def measure_iv(vi, vf, vstep, compliance, return_sweep, npad, liveplot):
 
             return points,
 
-        thread_measurement = threading.Thread(target=measure, args=(v_arr, arr))
+        thread_measurement = BaseThread(target=measure, args=(v_arr, arr),
+                                        callback=save_results)
         thread_measurement.start()
-        # call back!!
 
         # thread to save results?
 
@@ -201,6 +215,7 @@ def make_out_dir():
 
 
 def save_results():
+    print("save results.....")
     global arr, _sensor_name, _vi, _vf, _npad, out_dir, date
 
     # Turn off the source meters
