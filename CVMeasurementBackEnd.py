@@ -14,7 +14,7 @@ CURRENT_COMPLIANCE = 10e-6
 
 
 class CVMeasurementBackend:
-    def __init__(self, pau_addr, lcr_addr, sensor_name):
+    def __init__(self, pau_addr=None, lcr_addr=None, sensor_name=None):
         self.pau = Keithley6487()
         self.lcr = WayneKerr4300()
 
@@ -46,8 +46,11 @@ class CVMeasurementBackend:
         self.out_dir_path = os.path.join(self.base_path, f'{self.date}_{self.sensor_name}')
         mkdir(self.out_dir_path)
 
-    def initialize_measurement(self):
+    def initialize_measurement(self, lcr_addr, pau_addr, sensor_name):
 
+        self.sensor_name = sensor_name
+        self.lcr_address = lcr_addr
+        self.pau_address = pau_addr
         self.data_points = -1
 
         self.measurement_arr = []
