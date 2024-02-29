@@ -4,12 +4,12 @@ import os
 import signal
 import numpy as np
 import time
-from util import mkdir, getdate
+from util import mkdir, getdate, make_unique_name
 from util import BaseThread
 
 
 class IVMeasurementBackend:
-    def __init__(self, smu_addr, pau_addr, sensor_name):
+    def __init__(self, smu_addr=None, pau_addr=None, sensor_name=None):
         self.smu = Keithley2400()
         self.pau = Keithley6487()
 
@@ -38,7 +38,11 @@ class IVMeasurementBackend:
         self.out_dir_path = os.path.join(self.base_path, f'{self.date}_{self.sensor_name}')
         mkdir(self.out_dir_path)
 
-    def initialize_measurement(self):
+    def initialize_measurement(self, smu_addr, pau_addr, sensor_name):
+
+        self.sensor_name = sensor_name
+        self.smu_address = smu_addr
+        self.pau_address = pau_addr
 
         self.measurement_arr.clear()
         self.output_arr.clear()
@@ -138,10 +142,6 @@ class IVMeasurementBackend:
         file_name = (f'IV_SMU+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}'
                      f'_pad{self.pad_number}')
         out_file_name = os.path.join(self.out_dir_path, file_name)
-
-        uniq = 1
-        while os.path.exists(out_file_name + '.txt'):
-            uniq += 1
-            out_file_name = f'{out_file_name}_{uniq}'
+        out_file_name = make_unique_name(out_file_name)
 
         np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)

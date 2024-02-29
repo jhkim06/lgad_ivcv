@@ -1,4 +1,4 @@
-import IV_SMU_PAU as IVMeasurement
+from IVMeasurementBackEnd import IVMeasurementBackend
 from LivePlotWindow import LivePlotWindow
 
 
@@ -21,7 +21,7 @@ class IVMeasurementGUI:
         self.check_box_live_plot = check_box_live_plot
 
         # IVMeasurement()
-        self.measurement = IVMeasurement
+        self.measurement = IVMeasurementBackend()
         self.w = None
 
     def set_combo_box_items(self, items):
@@ -107,15 +107,15 @@ class IVMeasurementGUI:
     def request_measurement(self, switch=None):
 
         # initialise measurement
-        self.measurement.init(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
-                              sensor_name=self.get_sensor_name())
+        self.measurement.initialize_measurement(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
+                                                sensor_name=self.get_sensor_name())
         # start measurement
-        self.measurement.measure_iv(vi=0, vf=self.get_final_voltage(),
-                                    vstep=self.get_voltage_step(), compliance=self.get_current_compliance(),
-                                    return_sweep=self.get_return_sweep(), npad=1, liveplot=self.get_live_plot())
+        self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),
+                                                 voltage_step=self.get_voltage_step(),
+                                                 current_compliance=self.get_current_compliance(),
+                                                 return_sweep=self.get_return_sweep(),
+                                                 pad_number=1, live_plot=self.get_live_plot())
+        self.measurement.start_measurement()
 
         if self.get_live_plot():
-            # FIXME save within backend process
             self.w = LivePlotWindow(self.measurement)
-        else:
-            self.measurement.save_results()
