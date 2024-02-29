@@ -53,7 +53,7 @@ class CVMeasurementBackend:
         self.pau_address = pau_addr
         self.data_points = -1
 
-        self.measurement_arr = []
+        self.measurement_arr.clear()
         self.output_arr.clear()
 
         self._make_out_dir()

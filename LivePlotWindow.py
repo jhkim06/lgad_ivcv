@@ -69,7 +69,7 @@ class LivePlotWindow(QWidget):
             else:
                 raw_data = raw_data.T
                 self.xs = raw_data[0]
-                self.ys = raw_data[3]  # NOTE input format!
+                self.ys = raw_data[1]
 
     def animate(self, event):
         self._before_drawing()  # update data

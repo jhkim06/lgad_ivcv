@@ -109,6 +109,7 @@ class IVMeasurementGUI:
         # initialise measurement
         self.measurement.initialize_measurement(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
                                                 sensor_name=self.get_sensor_name())
+        # TODO measurement according to switch selection
         # start measurement
         self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),
                                                  voltage_step=self.get_voltage_step(),

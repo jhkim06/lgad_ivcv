@@ -114,6 +114,8 @@ class CVMeasurementGUI:
 
         self.measurement.initialize_measurement(pau_addr=self.get_pau_name(), lcr_addr=self.get_lcr_name(),
                                                 sensor_name=self.get_sensor_name())
+
+        # TODO measurement according to switch selection
         self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),
                                                  voltage_step=self.get_voltage_step(),
                                                  frequency=self.get_frequency(), ac_level=self.get_ac_level(),
