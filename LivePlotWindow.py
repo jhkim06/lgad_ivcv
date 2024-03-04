@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import numpy as np
 
 
 class LivePlotWindow(QWidget):
