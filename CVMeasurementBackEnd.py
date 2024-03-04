@@ -109,6 +109,7 @@ class CVMeasurementBackend:
             voltage_array = np.concatenate([voltage_array, voltage_array[::-1]])
 
         self.n_measurement_points = len(voltage_array)
+        self.data_index_to_draw = 0
         return voltage_array
 
     def _measure(self, voltage_array):
@@ -164,6 +165,20 @@ class CVMeasurementBackend:
             return None
         else:
             return self.output_arr
+
+    def get_data_point(self):
+        if self.data_index_to_draw == self.n_measurement_points:
+            return None
+        else:
+            if len(self.output_arr) > 0:  # measurement started and data exists
+                if self.data_index_to_draw < len(self.output_arr):
+                    data_to_draw = self.output_arr[self.data_index_to_draw]
+                    self.data_index_to_draw += 1
+                    return data_to_draw
+                else:
+                    return self.output_arr[self.data_index_to_draw-1]
+            else:
+                return [0, 0]
 
     def get_out_dir(self):
         return self.out_dir_path

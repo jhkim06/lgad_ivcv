@@ -128,11 +128,6 @@ class IVMeasurementBackend:
         if len(self.output_arr) == self.n_measurement_points:
             return None
         else:
-            # TODO return tuple
-            '''
-            for output in self.output_arr:
-                yield output
-            '''
             return self.output_arr
 
     def get_data_point(self):

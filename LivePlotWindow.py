@@ -76,7 +76,7 @@ class LivePlotWindow(QWidget):
             # item['FIGURE'].clear()
             item['FIGURE'].grid(True)
 
-            item['FIGURE'].plot(self.xs, self.ys, 'o')
+            item['FIGURE'].plot(self.xs, self.ys, 'ro')
 
     def pause(self):
         # self.ani.event_source.stop()
