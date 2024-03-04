@@ -177,7 +177,7 @@ class CVMeasurementBackend:
             else:
                 return self.output_arr[self.data_index_to_draw-1]
         else:
-            return [0, 0]
+            return [None, None]
 
     def get_out_dir(self):
         return self.out_dir_path
