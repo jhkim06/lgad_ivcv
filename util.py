@@ -31,6 +31,7 @@ def make_unique_name(file_name):
     return file_name
 
 
+# thread with callback function
 class BaseThread(threading.Thread):
     def __init__(self, target, args=(), callback=None, callback_args=()):
         super().__init__(target=self.target_with_callback)
@@ -40,6 +41,6 @@ class BaseThread(threading.Thread):
         self.callback_args = callback_args
 
     def target_with_callback(self):
-        self.target(*self.callback_args)
+        self.target(*self.target_args)
         if self.callback is not None:
             self.callback(*self.callback_args)

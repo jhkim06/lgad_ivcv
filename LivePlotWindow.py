@@ -57,6 +57,8 @@ class LivePlotWindow(QWidget):
         self.canvas.draw()
 
     def _before_drawing(self):
+        # TODO construct list from the get_data() which use generator?
+        # or get two points and draw them?
         raw_data = self._measurement.get_data()
         if raw_data is None:
             self.ani.event_source.stop()
