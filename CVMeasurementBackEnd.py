@@ -17,6 +17,8 @@ class CVMeasurementBackend:
     def __init__(self, pau_addr=None, lcr_addr=None, sensor_name=None):
         self.pau = Keithley6487()
         self.lcr = WayneKerr4300()
+        self.smu = None
+        # class MeasurementBackend:
 
         self.sensor_name = sensor_name
         self.lcr_address = lcr_addr
@@ -167,21 +169,24 @@ class CVMeasurementBackend:
             return self.output_arr
 
     def get_data_point(self):
-        if self.data_index_to_draw == self.n_measurement_points:
-            return None
-        else:
-            if len(self.output_arr) > 0:  # measurement started and data exists
-                if self.data_index_to_draw < len(self.output_arr):
-                    data_to_draw = self.output_arr[self.data_index_to_draw]
-                    self.data_index_to_draw += 1
-                    return data_to_draw
-                else:
-                    return self.output_arr[self.data_index_to_draw-1]
+        if len(self.output_arr) > 0:  # measurement started and data exists
+            if self.data_index_to_draw < len(self.output_arr):
+                data_to_draw = self.output_arr[self.data_index_to_draw]
+                self.data_index_to_draw += 1
+                return data_to_draw
             else:
-                return [0, 0]
+                return self.output_arr[self.data_index_to_draw-1]
+        else:
+            return [0, 0]
 
     def get_out_dir(self):
         return self.out_dir_path
+
+    def all_data_drawn(self):
+        if self.data_index_to_draw == self.n_measurement_points:
+            return True
+        else:
+            return False
 
     def save_results(self):
         # TODO use verbose level

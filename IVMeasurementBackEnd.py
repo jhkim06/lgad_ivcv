@@ -12,6 +12,7 @@ class IVMeasurementBackend:
     def __init__(self, smu_addr=None, pau_addr=None, sensor_name=None):
         self.smu = Keithley2400()
         self.pau = Keithley6487()
+        self.smu = None
 
         self.sensor_name = sensor_name
         self.smu_address = smu_addr
@@ -131,21 +132,24 @@ class IVMeasurementBackend:
             return self.output_arr
 
     def get_data_point(self):
-        if self.data_index_to_draw == self.n_measurement_points:
-            return None
-        else:
-            if len(self.output_arr) > 0:  # measurement started and data exists
-                if self.data_index_to_draw < len(self.output_arr):
-                    data_to_draw = self.output_arr[self.data_index_to_draw]
-                    self.data_index_to_draw += 1
-                    return data_to_draw
-                else:
-                    return self.output_arr[self.data_index_to_draw-1]
+        if len(self.output_arr) > 0:  # measurement started and data exists
+            if self.data_index_to_draw < len(self.output_arr):
+                data_to_draw = self.output_arr[self.data_index_to_draw]
+                self.data_index_to_draw += 1
+                return data_to_draw
             else:
-                return [0, 0]
+                return self.output_arr[self.data_index_to_draw-1]
+        else:
+            return [None, None]
 
     def get_out_dir(self):
         return self.out_dir_path
+
+    def all_data_drawn(self):
+        if self.data_index_to_draw == self.n_measurement_points:
+            return True
+        else:
+            return False
 
     def save_results(self):
         self.smu.set_voltage(0)

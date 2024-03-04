@@ -57,15 +57,11 @@ class LivePlotWindow(QWidget):
         self.canvas.draw()
 
     def _before_drawing(self):
-        # TODO construct list from the get_data() which use generator?
-        # or get two points and draw them?
-        raw_data = self._measurement.get_data_point()
-        if raw_data is None:
+        if self._measurement.all_data_drawn():
             self.ani.event_source.stop()
             self.close()
         else:
-            # raw_data = np.array(self._measurement.get_data())
-            # raw_data = raw_data.T
+            raw_data = self._measurement.get_data_point()
             self.xs = raw_data[0]
             self.ys = raw_data[1]
 
@@ -75,8 +71,8 @@ class LivePlotWindow(QWidget):
         for item in self._plots:
             # item['FIGURE'].clear()
             item['FIGURE'].grid(True)
-
-            item['FIGURE'].plot(self.xs, self.ys, 'ro')
+            if self.xs is not None and self.ys is not None:
+                item['FIGURE'].plot(self.xs, self.ys, 'ro')
 
     def pause(self):
         # self.ani.event_source.stop()
