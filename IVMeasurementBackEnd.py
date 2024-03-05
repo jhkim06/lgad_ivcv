@@ -131,4 +131,4 @@ class IVMeasurementBackend(MeasurementBackend):
         out_file_name = make_unique_name(out_file_name)
 
         np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
-        self.save_as_plot(out_file_name)
+        self.save_as_plot(out_file_name + '.png')

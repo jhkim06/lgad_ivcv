@@ -84,5 +84,5 @@ class MeasurementBackend:
         ax = fig.add_subplot()
         output_arr_trans = np.array(self.output_arr).T
         ax.plot(output_arr_trans[0], output_arr_trans[1])
-        fig.savefig(out_file_name + '.png')
+        fig.savefig(out_file_name)
         plt.close()

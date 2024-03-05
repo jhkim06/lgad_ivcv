@@ -173,17 +173,19 @@ class CVMeasurementBackend(MeasurementBackend):
         ax.plot(v, c * 1e9, 'x-', color='tab:blue', markersize=5, linewidth=0.5, label="$C$")
         ax.set_xlabel('Bias (V)')
         ax.set_ylabel('C (nF)', color='tab:blue')
+
         ax2 = ax.twinx()
         ax2.plot(v, r, 'x-', color='tab:red')
         ax2.set_ylabel('R (Ohm)', color='tab:red')
         ax2.set_yscale('log')
+
         ax3 = ax.twinx()
         ax3.plot(v, 1 / (c) ** 2, 'x-', color='tab:green', markersize=5, linewidth=0.5, label="$1/C^2$")
         ax3.set_ylabel('$1/C^2 ($F$^{-2})$', color='tab:green')
         ax3.set_yscale('log')
         fig.tight_layout()
 
-        fig.savefig(out_file_name + '.png')
+        fig.savefig(out_file_name)
         plt.close()
 
     def save_results(self):
@@ -210,4 +212,4 @@ class CVMeasurementBackend(MeasurementBackend):
         out_file_name = make_unique_name(out_file_name)
 
         np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
-        self.save_cv_plot(out_file_name + '.txt')
+        self.save_cv_plot(out_file_name + '.png')
