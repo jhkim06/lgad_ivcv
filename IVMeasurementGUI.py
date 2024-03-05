@@ -20,6 +20,8 @@ class IVMeasurementGUI:
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
 
+        self.resource_map = None
+
         # IVMeasurement()
         self.measurement = IVMeasurementBackend()
         self.w = None
@@ -49,9 +51,10 @@ class IVMeasurementGUI:
     def set_return_sweep(self, return_sweep):
         self.check_box_return_sweep.setChecked(return_sweep)
 
-    def set(self, resource_items, sensor_name, initial_voltage, final_voltage, voltage_step,
+    def set(self, resource_map, sensor_name, initial_voltage, final_voltage, voltage_step,
             current_compliance, live_plot, return_sweep):
-        self.set_combo_box_items(resource_items)
+        self.resource_map = resource_map
+        self.set_combo_box_items([*self.resource_map.keys()])
         self.set_sensor_name(sensor_name)
         self.set_initial_voltage(initial_voltage)
         self.set_final_voltage(final_voltage)
@@ -60,11 +63,13 @@ class IVMeasurementGUI:
         self.set_live_plot(live_plot)
         self.set_return_sweep(return_sweep)
 
-    def get_smu_name(self):
-        return self.combo_box_smu.currentText()
+    def get_smu_addr(self):
+        id_name = self.combo_box_smu.currentText()
+        return self.resource_map[id_name]
 
-    def get_pau_name(self):
-        return self.combo_box_pau.currentText()
+    def get_pau_addr(self):
+        id_name = self.combo_box_pau.currentText()
+        return self.resource_map[id_name]
 
     def get_sensor_name(self):
         return self.line_edit_sensor_name.text()
@@ -91,8 +96,8 @@ class IVMeasurementGUI:
         return self.check_box_return_sweep.isChecked()
 
     def get(self):
-        smu = self.get_smu_name()
-        pau = self.get_pau_name()
+        smu = self.get_smu_addr()
+        pau = self.get_pau_addr()
         sensor_name = self.get_sensor_name()
         initial_voltage = self.get_initial_voltage()
         final_voltage = self.get_final_voltage()
@@ -107,7 +112,7 @@ class IVMeasurementGUI:
     def request_measurement(self, switch=None):
 
         # initialise measurement
-        self.measurement.initialize_measurement(smu_addr=self.get_smu_name(), pau_addr=self.get_pau_name(),
+        self.measurement.initialize_measurement(smu_addr=self.get_smu_addr(), pau_addr=self.get_pau_addr(),
                                                 sensor_name=self.get_sensor_name())
         # TODO measurement according to switch selection
         # start measurement

@@ -1,7 +1,8 @@
 import time
 import pyvisa
 
-class GPIBBase(): 
+
+class GPIBBase:
     _inst = []
     _delay = 0.005
 

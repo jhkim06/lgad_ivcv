@@ -59,21 +59,33 @@ class LGADMeasurement(QDialog):
 
         # default measurement
         self.measurement_type = MeasurementType.IV
-        self.resource_list = get_list_of_resources()  # FIXME better to request backend
+        # self.resource_list = get_list_of_resources()  # TODO use map_idn_address
+        self._set_connected_resource_map()
         self._init_gui_options(self.measurement_type)  # set default options
         self._init_gui_options(MeasurementType.CV)
         self.ui.tabWidget.setCurrentIndex(0)
 
         self.show()
 
+    def _set_connected_resource_map(self):
+
+        rm = pyvisa.ResourceManager()
+        rlist = rm.list_resources()
+
+        self.map_idn_address = dict()
+        for addr in rlist:
+            inst = rm.open_resource(addr)
+            self.map_idn_address[addr] = inst.query("*IDN?")
+            inst.close()
+
     def _init_gui_options(self, measurement_type):
 
         if measurement_type == MeasurementType.IV:
-            self.iv_gui.set(self.resource_list, "FBK", 0, -250, 1,
+            self.iv_gui.set(self.map_idn_address, "FBK", 0, -250, 1,
                             1e-5, True, True)
 
         elif measurement_type == MeasurementType.CV:
-            self.cv_gui.set(self.resource_list, "FBK", 0, -60, 1,
+            self.cv_gui.set(self.map_idn_address, "FBK", 0, -60, 1,
                             1000, 0.1, True, True)
         else:
             print("Unknown measurement type")

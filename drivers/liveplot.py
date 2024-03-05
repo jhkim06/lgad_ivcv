@@ -1,6 +1,7 @@
 from matplotlib import animation as ani
 from matplotlib import pyplot as plt
 
+
 class FuncAnimationDisposable(ani.FuncAnimation):
     def __init__(self, fig, func, **kwargs):
         print("use custom FuncAnimation...")
@@ -11,7 +12,6 @@ class FuncAnimationDisposable(ani.FuncAnimation):
         else:
             self._automatic_close = False
         super().__init__(fig, func, **kwargs)
-
 
     def _step(self, *args):
         still_going = ani.Animation._step(self, *args)
