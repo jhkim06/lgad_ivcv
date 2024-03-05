@@ -1,5 +1,7 @@
 import os
 from util import mkdir, getdate
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class MeasurementBackend:
@@ -75,3 +77,12 @@ class MeasurementBackend:
             return True
         else:
             return False
+
+    def save_as_plot(self, out_file_name):
+        plt.ioff()
+        fig = plt.Figure()
+        ax = fig.add_subplot()
+        output_arr_trans = np.array(self.output_arr).T
+        ax.plot(output_arr_trans[0], output_arr_trans[1])
+        fig.savefig(out_file_name + '.png')
+        plt.close()

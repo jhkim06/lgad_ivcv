@@ -11,6 +11,7 @@ from util import BaseThread
 from MeasurementBackEnd import MeasurementBackend
 import matplotlib.pyplot as plt
 
+
 CURRENT_COMPLIANCE = 10e-6
 
 
@@ -157,11 +158,32 @@ class CVMeasurementBackend(MeasurementBackend):
             self._measure(voltage_array)
             self.save_results()
 
-    def ivplot(self, out_name):
-        fig, ax = plt.subplots()
-        output_arr_trans = np.array(self.output_arr).T
-        ax.plot(output_arr_trans[0], output_arr_trans[1])
-        fig.savefig(out_name + '.png')
+    def save_cv_plot(self, out_file_name):
+        measurement_arr_trans = np.array(self.measurement_arr).T
+        v = measurement_arr_trans[0]
+        c = measurement_arr_trans[1]
+        r = measurement_arr_trans[2]
+        # i = measurement_arr_trans[3]
+        fig = plt.Figure()
+        ax = fig.add_subplot()
+
+        if v[1] < 0:
+            v = -1 * v
+
+        ax.plot(v, c * 1e9, 'x-', color='tab:blue', markersize=5, linewidth=0.5, label="$C$")
+        ax.set_xlabel('Bias (V)')
+        ax.set_ylabel('C (nF)', color='tab:blue')
+        ax2 = ax.twinx()
+        ax2.plot(v, r, 'x-', color='tab:red')
+        ax2.set_ylabel('R (Ohm)', color='tab:red')
+        ax2.set_yscale('log')
+        ax3 = ax.twinx()
+        ax3.plot(v, 1 / (c) ** 2, 'x-', color='tab:green', markersize=5, linewidth=0.5, label="$1/C^2$")
+        ax3.set_ylabel('$1/C^2 ($F$^{-2})$', color='tab:green')
+        ax3.set_yscale('log')
+        fig.tight_layout()
+
+        fig.savefig(out_file_name + '.png')
         plt.close()
 
     def save_results(self):
@@ -188,4 +210,4 @@ class CVMeasurementBackend(MeasurementBackend):
         out_file_name = make_unique_name(out_file_name)
 
         np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
-        self.ivplot(out_file_name)
+        self.save_cv_plot(out_file_name + '.txt')
