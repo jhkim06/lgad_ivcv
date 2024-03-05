@@ -22,13 +22,16 @@ class MeasurementBackend:
 
         self.n_measurement_points = 0
         self.data_index_to_draw = 0
-        self.measurement_arr = []
-        self.output_arr = []
+        self.measurement_arr = []  # to save as output txt
+        self.output_arr = []  # for live plot
 
         self.out_txt_header = ''
         self.base_path = ''
         self.date = ''
         self.out_dir_path = ''
+
+        self.y_axis_label = ''
+        self.x_axis_label = ''
 
     def _make_out_dir(self):
         self.date = getdate()
@@ -41,8 +44,20 @@ class MeasurementBackend:
         else:
             return self.output_arr
 
+    def get_x_axis_label(self):
+        return self.x_axis_label
+
+    def get_y_axis_label(self):
+        return self.y_axis_label
+
+    def is_data_exists(self):
+        if len(self.output_arr) > 0:
+            return True
+        else:
+            return False
+
     def get_data_point(self):
-        if len(self.output_arr) > 0:  # measurement started and data exists
+        if self.is_data_exists():
             if self.data_index_to_draw < len(self.output_arr):
                 data_to_draw = self.output_arr[self.data_index_to_draw]
                 self.data_index_to_draw += 1

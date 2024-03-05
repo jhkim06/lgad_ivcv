@@ -10,11 +10,12 @@ class LivePlotWindow(QWidget):
         super().__init__()
 
         # Default Figure Setting
-        self._number_of_figures = 1
-        self.xs = list()
-        self.ys = list()
+        self.xs = None
+        self.ys = None
 
         self._measurement = measurement
+        self.x_axis_label = measurement.get_x_axis_label()
+        self.y_axis_label = measurement.get_y_axis_label()
 
         self._init_draw()  # create sub-plots and call FuncAnimation()
         self._init_ui()
@@ -37,16 +38,13 @@ class LivePlotWindow(QWidget):
     def _init_draw(self):
         # for PyQt embedding
         self.fig = plt.Figure()
+        self.axis = self.fig.add_subplot()
         self.canvas = FigureCanvas(self.fig)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-        # make figure list
-        self._plots = list()
-        for idx in range(0, self._number_of_figures):
-            # able to draw n row 1 col fig
-            self._plots.append({"FIGURE": self.fig.add_subplot(self._number_of_figures, 1, idx + 1),
-                                'INDEX': list()})
-            self._plots[idx]['FIGURE'].clear()
+        self.axis.set_ylabel(self.y_axis_label)
+        self.axis.set_xlabel(self.x_axis_label)
+        self.axis.clear()
 
         self.ani = animation.FuncAnimation(fig=self.fig,
                                            func=self.animate,
@@ -67,11 +65,9 @@ class LivePlotWindow(QWidget):
     def animate(self, event):
         self._before_drawing()  # update data
 
-        for item in self._plots:
-            # item['FIGURE'].clear()
-            item['FIGURE'].grid(True)
-            if self.xs is not None and self.ys is not None:
-                item['FIGURE'].plot(self.xs, self.ys, 'ro')
+        self.axis.grid(True)
+        if self.xs is not None and self.ys is not None:
+            self.axis.plot(self.xs, self.ys, 'ro')
 
     def pause(self):
         # self.ani.event_source.stop()

@@ -27,6 +27,9 @@ class IVMeasurementBackend(MeasurementBackend):
         self.live_plot = True
         self.current_compliance = 1e-5
 
+        self.x_axis_label = 'Bias Voltage (V)'
+        self.y_axis_label = 'Current (I)'
+
         self.out_txt_header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'
         self.base_path = r'C:\LGAD_test\I-V_test'
 

@@ -35,6 +35,9 @@ class CVMeasurementBackend(MeasurementBackend):
         self.return_sweep = True
         self.live_plot = True
 
+        self.x_axis_label = 'Bias Voltage (V)'
+        self.y_axis_label = 'Capacitance (F)'
+
         self.out_txt_header = 'Vpau(V)\tC(F)\tR(Ohm)\tIpau(A)'
         self.base_path = r'C:\LGAD_test\C-V_test'
 
@@ -145,10 +148,12 @@ class CVMeasurementBackend(MeasurementBackend):
         time.sleep(1)
 
         if self.live_plot:
+            # do measurement in a thread, when finished save_results method called as callback
             measurement_thread = BaseThread(target=self._measure, args=(voltage_array,),
                                             callback=self.save_results)
             measurement_thread.start()
         else:
+            # TODO need to check if it works without problems
             self._measure(voltage_array)
             self.save_results()
 
