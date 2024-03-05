@@ -9,7 +9,7 @@ import time
 from util import make_unique_name
 from util import BaseThread
 from MeasurementBackEnd import MeasurementBackend
-
+import matplotlib.pyplot as plt
 
 CURRENT_COMPLIANCE = 10e-6
 
@@ -157,6 +157,13 @@ class CVMeasurementBackend(MeasurementBackend):
             self._measure(voltage_array)
             self.save_results()
 
+    def ivplot(self, out_name):
+        fig, ax = plt.subplots()
+        output_arr_trans = np.array(self.output_arr).T
+        ax.plot(output_arr_trans[0], output_arr_trans[1])
+        fig.savefig(out_name + '.png')
+        plt.close()
+
     def save_results(self):
         # TODO use verbose level
         if (self.initial_voltage_more_points is not None) and (self.final_voltage_more_points is not None):
@@ -181,3 +188,4 @@ class CVMeasurementBackend(MeasurementBackend):
         out_file_name = make_unique_name(out_file_name)
 
         np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
+        self.ivplot(out_file_name)

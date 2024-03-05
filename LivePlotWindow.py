@@ -9,7 +9,6 @@ class LivePlotWindow(QWidget):
     def __init__(self, measurement):
         super().__init__()
 
-        # Default Figure Setting
         self.xs = None
         self.ys = None
 
@@ -42,9 +41,9 @@ class LivePlotWindow(QWidget):
         self.canvas = FigureCanvas(self.fig)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
+        self.axis.clear()
         self.axis.set_ylabel(self.y_axis_label)
         self.axis.set_xlabel(self.x_axis_label)
-        self.axis.clear()
 
         self.ani = animation.FuncAnimation(fig=self.fig,
                                            func=self.animate,
@@ -58,6 +57,7 @@ class LivePlotWindow(QWidget):
             self.ani.event_source.stop()
             self.close()
         else:
+            # expected data type is a list with two values for x and y
             raw_data = self._measurement.get_data_point()
             self.xs = raw_data[0]
             self.ys = raw_data[1]
