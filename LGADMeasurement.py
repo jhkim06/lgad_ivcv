@@ -70,12 +70,20 @@ class LGADMeasurement(QDialog):
     def _set_connected_resource_map(self):
 
         rm = pyvisa.ResourceManager()
-        rlist = rm.list_resources()
+        rlist = list(rm.list_resources())
+        for addr in list(rlist):
+            if 'ASRL' in addr:
+                rlist.remove(addr)
 
         self.map_idn_address = dict()
         for addr in rlist:
             inst = rm.open_resource(addr)
-            self.map_idn_address[addr] = inst.query("*IDN?")
+            idn = inst.query("*IDN?")
+            if idn == '\n':
+                idn = 'LCR meter'
+            else:
+                idn = " ".join(idn.split(",")[1:-2])
+            self.map_idn_address[idn] = addr
             inst.close()
 
     def _init_gui_options(self, measurement_type):
