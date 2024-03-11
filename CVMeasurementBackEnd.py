@@ -26,8 +26,8 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pau_address = pau_addr
         self.initial_voltage = 0
         self.final_voltage = -50
-        self.initial_voltage_more_points = None
-        self.final_voltage_more_points = None
+        self.initial_voltage_more_points = -15
+        self.final_voltage_more_points = -25
         self.voltage_step = 50
         self.data_points = -1
         self.ac_level = 0.1

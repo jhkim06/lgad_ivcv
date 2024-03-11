@@ -72,6 +72,9 @@ class MeasurementBackend:
     def get_out_dir(self):
         return self.out_dir_path
 
+    def get_status(self):
+        pass
+
     def all_data_drawn(self):
         if self.data_index_to_draw == self.n_measurement_points:
             return True

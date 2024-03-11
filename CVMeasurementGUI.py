@@ -8,7 +8,8 @@ class CVMeasurementGUI:
                  line_edit_sensor_name, line_edit_initial_voltage, line_edit_final_voltage,
                  line_edit_voltage_step, line_edit_frequency,
                  ac_level,
-                 check_box_return_sweep, check_box_live_plot):
+                 check_box_return_sweep, check_box_live_plot,
+                 button_measure, label_status):
 
         # Widgets
         self.combo_box_lcr = combo_box_lcr
@@ -21,6 +22,9 @@ class CVMeasurementGUI:
         self.line_edit_ac_level = ac_level
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
+        self.button_measure = button_measure
+        self.button_measure.clicked.connect(self.request_measurement)
+        self.label_status = label_status
 
         self.resource_map = None
 
@@ -130,3 +134,7 @@ class CVMeasurementGUI:
 
         if self.get_live_plot():
             self.w = LivePlotWindow(self.measurement)
+            # UpdateStatus(self.measurement)
+        else:
+            # UpdateStatus(self.measurement)
+            pass

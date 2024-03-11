@@ -7,7 +7,8 @@ class IVMeasurementGUI:
     def __init__(self, combo_box_smu, combo_box_pau,
                  line_edit_sensor_name, line_edit_initial_voltage, line_edit_final_voltage,
                  line_edit_voltage_step, line_edit_current_compliance,
-                 check_box_return_sweep, check_box_live_plot):
+                 check_box_return_sweep, check_box_live_plot,
+                 button_measure, label_status):
 
         # Widgets
         self.combo_box_smu = combo_box_smu
@@ -19,6 +20,9 @@ class IVMeasurementGUI:
         self.line_edit_current_compliance = line_edit_current_compliance
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
+        self.button_measure = button_measure
+        self.button_measure.clicked.connect(self.request_measurement)
+        self.label_status = label_status
 
         self.resource_map = None
 

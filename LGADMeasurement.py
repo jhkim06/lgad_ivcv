@@ -32,9 +32,6 @@ class LGADMeasurement(QDialog):
         self.ui.setupUi(self)
         self.setWindowTitle("LGAD Measurements")
 
-        # connect button to function
-        self.ui.pushButtonStartMeasurement.clicked.connect(self._measure)
-        self.ui.pushButtonStartMeasurement_CV.clicked.connect(self._measure)
         # connect function for tab change
         self.ui.tabWidget.currentChanged.connect(self._current_tab_changed)
 
@@ -48,20 +45,22 @@ class LGADMeasurement(QDialog):
                                        self.ui.lineEditSensorName,
                                        self.ui.lineEditInitialVoltage, self.ui.lineEditFinalVoltage,
                                        self.ui.lineEditVoltageStep, self.ui.lineEditCurrentCompliance,
-                                       self.ui.checkBoxReturnSweep, self.ui.checkBoxLivePlot)
+                                       self.ui.checkBoxReturnSweep, self.ui.checkBoxLivePlot,
+                                       self.ui.pushButtonStartMeasurement, self.ui.labelStatus)
 
         self.cv_gui = CVMeasurementGUI(self.ui.comboBoxLCR, self.ui.comboBoxPAU_CV,
                                        self.ui.lineEditSensorName_CV,
                                        self.ui.lineEditInitialVoltage_CV, self.ui.lineEditFinalVoltage_CV,
                                        self.ui.lineEditVoltageStep_CV, self.ui.lineEditFrequency_CV,
                                        self.ui.lineEditLevAC,
-                                       self.ui.checkBoxReturnSweep_CV, self.ui.checkBoxLivePlot_CV)
+                                       self.ui.checkBoxReturnSweep_CV, self.ui.checkBoxLivePlot_CV,
+                                       self.ui.pushButtonStartMeasurement_CV, self.ui.labelStatus)
 
         # default measurement
         self.measurement_type = MeasurementType.IV
         # self.resource_list = get_list_of_resources()  # TODO use map_idn_address
         self._set_connected_resource_map()
-        self._init_gui_options(self.measurement_type)  # set default options
+        self._init_gui_options(MeasurementType.IV)  # set default options
         self._init_gui_options(MeasurementType.CV)
         self.ui.tabWidget.setCurrentIndex(0)
 
@@ -111,24 +110,6 @@ class LGADMeasurement(QDialog):
             self.measurement_type = MeasurementType.IV
             print("invalid measurement index, set IV measurement")
     
-    def _measure(self):
-        print('current type', self.measurement_type)
-        current_gui = None
-        if self.measurement_type == MeasurementType.IV:
-            # print("IV measurement.......")
-            current_gui = self.iv_gui
-
-        elif self.measurement_type == MeasurementType.CV:
-            # print("CV measurement.......")
-            current_gui = self.cv_gui
-        else:
-            pass
-        # TODO if switch is available, loop over all switches
-        current_gui.request_measurement()
-
-        # result_path = self.measurement.get_out_dir_path()
-        # self.ui.labelStatus.setText(result_path)
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
