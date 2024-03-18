@@ -27,6 +27,8 @@ class MeasurementBackend:
         self.measurement_arr = []  # to save as output txt
         self.output_arr = []  # for live plot
 
+        self.measurement_in_progress = False
+        self.status = ''
         self.out_txt_header = ''
         self.base_path = ''
         self.date = ''
@@ -39,6 +41,12 @@ class MeasurementBackend:
         self.date = getdate()
         self.out_dir_path = os.path.join(self.base_path, f'{self.date}_{self.sensor_name}')
         mkdir(self.out_dir_path)
+
+    def get_status_str(self):
+        return self.status
+
+    def is_measurement_in_progress(self):
+        return self.measurement_in_progress
 
     def get_data(self):
         if len(self.output_arr) == self.n_measurement_points:
@@ -71,9 +79,6 @@ class MeasurementBackend:
 
     def get_out_dir(self):
         return self.out_dir_path
-
-    def get_status(self):
-        pass
 
     def all_data_drawn(self):
         if self.data_index_to_draw == self.n_measurement_points:

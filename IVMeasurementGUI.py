@@ -1,3 +1,5 @@
+import time
+
 from IVMeasurementBackEnd import IVMeasurementBackend
 from LivePlotWindow import LivePlotWindow
 
@@ -119,13 +121,25 @@ class IVMeasurementGUI:
         self.measurement.initialize_measurement(smu_addr=self.get_smu_addr(), pau_addr=self.get_pau_addr(),
                                                 sensor_name=self.get_sensor_name())
         # TODO measurement according to switch selection
-        # start measurement
         self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),
                                                  voltage_step=self.get_voltage_step(),
                                                  current_compliance=self.get_current_compliance(),
                                                  return_sweep=self.get_return_sweep(),
                                                  pad_number=1, live_plot=self.get_live_plot())
+        self.label_status.setText("Start measurement...")
         self.measurement.start_measurement()
 
+        # UpdateStatus(self.measurement)
         if self.get_live_plot():
             self.w = LivePlotWindow(self.measurement)
+
+    def update_status_label(self):
+
+        status_str = ''
+        while self.measurement.is_measurement_in_progress():
+            temp_str = self.measurement.get_status_str()
+            if status_str != temp_str:
+                status_str = temp_str
+                self.label_status.setText(status_str)
+            time.sleep(0.1)
+        self.label_status.setText("IV measurement done, output path " + self.measurement.get_out_dir())

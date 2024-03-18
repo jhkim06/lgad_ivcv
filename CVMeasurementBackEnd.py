@@ -109,7 +109,8 @@ class CVMeasurementBackend(MeasurementBackend):
         return voltage_array
 
     def _measure(self, voltage_array):
-        for voltage in voltage_array:
+        self.measurement_in_progress = True
+        for index, voltage in enumerate(voltage_array):
             if voltage > 0:
                 print("Warning: positive bias is not allowed. Set DC voltage to 0.")
                 voltage = 0
@@ -134,6 +135,8 @@ class CVMeasurementBackend(MeasurementBackend):
 
             self.measurement_arr.append([voltage_pau, capacitance, resistance, current_pau])
             self.output_arr.append([voltage_pau, capacitance])
+            self.status = f'{index + 1}/{len(voltage_array)} processed'
+        self.measurement_in_progress = False
 
     def start_measurement(self):
         self.pau.set_current_limit(CURRENT_COMPLIANCE)
@@ -153,6 +156,7 @@ class CVMeasurementBackend(MeasurementBackend):
             measurement_thread = BaseThread(target=self._measure, args=(voltage_array,),
                                             callback=self.save_results)
             measurement_thread.start()
+            # TODO update status inside measurement thread?
         else:
             # TODO need to check if it works without problems
             self._measure(voltage_array)

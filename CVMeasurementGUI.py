@@ -1,5 +1,8 @@
+import time
+
 from CVMeasurementBackEnd import CVMeasurementBackend
 from LivePlotWindow import LivePlotWindow
+from util import BaseThread
 
 
 class CVMeasurementGUI:
@@ -130,11 +133,24 @@ class CVMeasurementGUI:
                                                  frequency=self.get_frequency(), ac_level=self.get_ac_level(),
                                                  return_sweep=self.get_return_sweep(),
                                                  pad_number=1, live_plot=self.get_live_plot())
+        self.label_status.setText("Start measurement...")
         self.measurement.start_measurement()
+
+        update_thread = BaseThread(target=self.update_status_label)
+        update_thread.start()
 
         if self.get_live_plot():
             self.w = LivePlotWindow(self.measurement)
-            # UpdateStatus(self.measurement)
         else:
-            # UpdateStatus(self.measurement)
             pass
+
+    def update_status_label(self):
+
+        status_str = ''
+        while self.measurement.is_measurement_in_progress():
+            temp_str = self.measurement.get_status_str()
+            if status_str != temp_str:
+                status_str = temp_str
+                self.label_status.setText(status_str)
+            time.sleep(0.1)
+        self.label_status.setText("CV measurement done, output path " + self.measurement.get_out_dir())

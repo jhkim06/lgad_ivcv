@@ -87,6 +87,7 @@ class IVMeasurementBackend(MeasurementBackend):
         return voltage_array
 
     def _measure(self, voltage_array):
+        self.measurement_in_progress = True
         for voltage in voltage_array:
             self.smu.set_voltage(voltage)
             voltage_smu, current_smu = self.smu.read().split(',')
@@ -97,6 +98,7 @@ class IVMeasurementBackend(MeasurementBackend):
             print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
             self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
             self.output_arr.append([voltage, current_pau])
+        self.measurement_in_progress = False
 
     def start_measurement(self):
 
