@@ -102,13 +102,13 @@ class LGADMeasurement(QDialog):
         current_index = self.ui.tabWidget.currentIndex()
         if current_index == 0:
             self.measurement_type = MeasurementType.IV
-            self.ui.labelStatus.setText("IV measurement selected.")
+            self.ui.labelStatus.setText("IV measurement selected")
         elif current_index == 1:
             self.measurement_type = MeasurementType.CV
-            self.ui.labelStatus.setText("CV measurement selected.")
+            self.ui.labelStatus.setText("CV measurement selected")
         elif current_index == 2:
             self.measurement_type = MeasurementType.CF
-            self.ui.labelStatus.setText("CF measurement selected.")
+            self.ui.labelStatus.setText("CF measurement selected")
         else:
             self.measurement_type = MeasurementType.IV
             print("invalid measurement index, set IV measurement")

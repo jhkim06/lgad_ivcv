@@ -27,6 +27,7 @@ class MeasurementBackend:
         self.measurement_arr = []  # to save as output txt
         self.output_arr = []  # for live plot
 
+        self.return_sweep_started = False
         self.measurement_in_progress = False
         self.status = ''
         self.out_txt_header = ''
@@ -47,6 +48,9 @@ class MeasurementBackend:
 
     def is_measurement_in_progress(self):
         return self.measurement_in_progress
+
+    def is_return_sweep_started(self):
+        return self.return_sweep_started
 
     def get_data(self):
         if len(self.output_arr) == self.n_measurement_points:

@@ -136,7 +136,10 @@ class CVMeasurementBackend(MeasurementBackend):
             self.measurement_arr.append([voltage_pau, capacitance, resistance, current_pau])
             self.output_arr.append([voltage_pau, capacitance])
             self.status = f'{index + 1}/{len(voltage_array)} processed'
+            if self.return_sweep and index > len(voltage_array) / 2:
+                self.return_sweep_started = True
         self.measurement_in_progress = False
+        self.return_sweep_started = False
 
     def start_measurement(self):
         self.pau.set_current_limit(CURRENT_COMPLIANCE)

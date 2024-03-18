@@ -153,4 +153,4 @@ class CVMeasurementGUI:
                 status_str = temp_str
                 self.label_status.setText(status_str)
             time.sleep(0.1)
-        self.label_status.setText("CV measurement done, output path " + self.measurement.get_out_dir())
+        self.label_status.setText("CV measurement DONE, output path: " + self.measurement.get_out_dir())

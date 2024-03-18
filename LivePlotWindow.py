@@ -62,12 +62,17 @@ class LivePlotWindow(QWidget):
             self.xs = raw_data[0]
             self.ys = raw_data[1]
 
+        return self._measurement.is_return_sweep_started()
+
     def animate(self, event):
-        self._before_drawing()  # update data
+        return_sweep = self._before_drawing()  # update data
 
         self.axis.grid(True)
         if self.xs is not None and self.ys is not None:
-            self.axis.plot(self.xs, self.ys, 'ro')
+            if return_sweep:
+                self.axis.plot(self.xs, self.ys, marker='o', mfc='none', color='black')
+            else:
+                self.axis.plot(self.xs, self.ys, 'ro')
 
     def pause(self):
         # self.ani.event_source.stop()

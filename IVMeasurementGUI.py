@@ -142,4 +142,4 @@ class IVMeasurementGUI:
                 status_str = temp_str
                 self.label_status.setText(status_str)
             time.sleep(0.1)
-        self.label_status.setText("IV measurement done, output path " + self.measurement.get_out_dir())
+        self.label_status.setText("IV measurement DONE, output path: " + self.measurement.get_out_dir())

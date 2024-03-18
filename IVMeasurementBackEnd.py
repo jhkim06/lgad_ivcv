@@ -88,7 +88,7 @@ class IVMeasurementBackend(MeasurementBackend):
 
     def _measure(self, voltage_array):
         self.measurement_in_progress = True
-        for voltage in voltage_array:
+        for index, voltage in enumerate(voltage_array):
             self.smu.set_voltage(voltage)
             voltage_smu, current_smu = self.smu.read().split(',')
             current_pau, _, _ = self.pau.read().split(',')
@@ -96,9 +96,14 @@ class IVMeasurementBackend(MeasurementBackend):
             current_smu = float(current_smu)
             current_pau = float(current_pau[:-1])
             print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
+
             self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
             self.output_arr.append([voltage, current_pau])
+            self.status = f'{index + 1}/{len(voltage_array)} processed'
+            if self.return_sweep and index > len(voltage_array) / 2:
+                self.return_sweep_started = True
         self.measurement_in_progress = False
+        self.return_sweep_started = False
 
     def start_measurement(self):
 
