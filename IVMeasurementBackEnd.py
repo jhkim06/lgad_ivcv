@@ -99,9 +99,11 @@ class IVMeasurementBackend(MeasurementBackend):
 
             self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
             self.output_arr.append([voltage, current_pau])
+
             self.status = f'{index + 1}/{len(voltage_array)} processed'
             if self.return_sweep and index > len(voltage_array) / 2:
                 self.return_sweep_started = True
+
         self.measurement_in_progress = False
         self.return_sweep_started = False
 

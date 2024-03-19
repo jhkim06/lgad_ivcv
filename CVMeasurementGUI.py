@@ -129,7 +129,6 @@ class CVMeasurementGUI:
 
     def control_measurement(self):
         if self.button_measure.isChecked():
-            self.button_measure.setText("Stop Measurement")
             print("start measurement btn clicked")
             self.measurement.initialize_measurement(pau_addr=self.get_pau_addr(), lcr_addr=self.get_lcr_addr(),
                                                     sensor_name=self.get_sensor_name())
@@ -142,6 +141,7 @@ class CVMeasurementGUI:
                                                      pad_number=1, live_plot=self.get_live_plot())
             self.label_status.setText("Start measurement...")
             self.measurement.start_measurement()
+            self.button_measure.setText("Stop Measurement")
 
             update_thread = BaseThread(target=self.update_status_label, callback=self.measure_btn_reset)
             update_thread.start()

@@ -142,6 +142,7 @@ class CVMeasurementBackend(MeasurementBackend):
 
             self.measurement_arr.append([voltage_pau, capacitance, resistance, current_pau])
             self.output_arr.append([voltage_pau, capacitance])
+
             self.status = f'{index + 1}/{len(voltage_array)} processed'
             if self.return_sweep and index > len(voltage_array) / 2:
                 self.return_sweep_started = True
@@ -180,7 +181,6 @@ class CVMeasurementBackend(MeasurementBackend):
     def stop_measurement(self):
         self.event.set()
         self.measurement_thread.join()
-        # self._safe_escaper()
 
     def save_cv_plot(self, out_file_name):
         measurement_arr_trans = np.array(self.measurement_arr).T
