@@ -11,6 +11,8 @@ from util import BaseThread
 from MeasurementBackEnd import MeasurementBackend
 import matplotlib.pyplot as plt
 
+from threading import Event
+
 
 CURRENT_COMPLIANCE = 10e-6
 
@@ -35,6 +37,9 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pad_number = 1
         self.return_sweep = True
         self.live_plot = True
+
+        self.event = Event()
+        self.measurement_thread = None
 
         self.x_axis_label = 'Bias Voltage (V)'
         self.y_axis_label = 'Capacitance (F)'
@@ -63,6 +68,7 @@ class CVMeasurementBackend(MeasurementBackend):
 
         self.lcr.get_idn()
         self.pau.get_idn()
+        self.resources_closed = False
 
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,
                                 ac_level, frequency, return_sweep, pad_number, live_plot):
@@ -76,7 +82,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.live_plot = live_plot
         self.pad_number = pad_number
 
-    def _safe_escaper(self, signum, frame):
+    def _safe_escaper(self):
         print("User interrupt... Turning off the output ...")
         self.pau.set_voltage(0)
         self.pau.set_output('OFF')
@@ -84,8 +90,9 @@ class CVMeasurementBackend(MeasurementBackend):
         self.lcr.set_output('OFF')
         self.lcr.set_dc_voltage(0)
         self.lcr.close()
+        self.resources_closed = True
         print("WARNING: Please make sure the output is turned off!")
-        exit(1)
+        # exit(1)
 
     def _make_voltage_array(self):
         n_measurement_points = abs(int(self.final_voltage - self.initial_voltage)) + 1
@@ -108,7 +115,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.data_index_to_draw = 0
         return voltage_array
 
-    def _measure(self, voltage_array):
+    def _measure(self, voltage_array, event):
         self.measurement_in_progress = True
         for index, voltage in enumerate(voltage_array):
             if voltage > 0:
@@ -138,6 +145,10 @@ class CVMeasurementBackend(MeasurementBackend):
             self.status = f'{index + 1}/{len(voltage_array)} processed'
             if self.return_sweep and index > len(voltage_array) / 2:
                 self.return_sweep_started = True
+
+            if event.is_set():
+                self._safe_escaper()
+                break
         self.measurement_in_progress = False
         self.return_sweep_started = False
 
@@ -155,15 +166,21 @@ class CVMeasurementBackend(MeasurementBackend):
         time.sleep(1)
 
         if self.live_plot:
+            self.event.clear()
             # do measurement in a thread, when finished save_results method called as callback
-            measurement_thread = BaseThread(target=self._measure, args=(voltage_array,),
-                                            callback=self.save_results)
-            measurement_thread.start()
+            self.measurement_thread = BaseThread(target=self._measure, args=(voltage_array, self.event),
+                                                 callback=self.save_results)
+            self.measurement_thread.start()
             # TODO update status inside measurement thread?
         else:
             # TODO need to check if it works without problems
             self._measure(voltage_array)
             self.save_results()
+
+    def stop_measurement(self):
+        self.event.set()
+        self.measurement_thread.join()
+        # self._safe_escaper()
 
     def save_cv_plot(self, out_file_name):
         measurement_arr_trans = np.array(self.measurement_arr).T
@@ -196,27 +213,29 @@ class CVMeasurementBackend(MeasurementBackend):
         plt.close()
 
     def save_results(self):
-        # TODO use verbose level
-        if (self.initial_voltage_more_points is not None) and (self.final_voltage_more_points is not None):
-            print(f"   * Bias sweep of {self.n_measurement_points} meas between {self.initial_voltage} "
-                  f"and {self.final_voltage} "
-                  f"with {self.n_measurement_points} meas "
-                  f"between {self.initial_voltage_more_points} and {self.final_voltage_more_points}")
-        else:
-            print(f"   * Bias sweep of {self.n_measurement_points} meas "
-                  f"between {self.initial_voltage} and {self.final_voltage} ")
-        print(f"   * Return sweep: {self.return_sweep}")
+        if self.resources_closed is False:
+            # TODO use verbose level
+            if (self.initial_voltage_more_points is not None) and (self.final_voltage_more_points is not None):
+                print(f"   * Bias sweep of {self.n_measurement_points} meas between {self.initial_voltage} "
+                      f"and {self.final_voltage} "
+                      f"with {self.n_measurement_points} meas "
+                      f"between {self.initial_voltage_more_points} and {self.final_voltage_more_points}")
+            else:
+                print(f"   * Bias sweep of {self.n_measurement_points} meas "
+                      f"between {self.initial_voltage} and {self.final_voltage} ")
+            print(f"   * Return sweep: {self.return_sweep}")
 
-        self.pau.set_output('OFF')
-        self.pau.close()
-        self.lcr.set_output('OFF')
-        self.lcr.set_dc_voltage(0)
-        self.lcr.close()
+            self.pau.set_output('OFF')
+            self.pau.close()
+            self.lcr.set_output('OFF')
+            self.lcr.set_dc_voltage(0)
+            self.lcr.close()
+            self.resources_closed = True
 
-        file_name = (f'CV_LCR+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}_'
-                     f'{self.frequency}Hz_pad{self.pad_number}')
-        out_file_name = os.path.join(self.out_dir_path, file_name)
-        out_file_name = make_unique_name(out_file_name)
+            file_name = (f'CV_LCR+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}_'
+                         f'{self.frequency}Hz_pad{self.pad_number}')
+            out_file_name = os.path.join(self.out_dir_path, file_name)
+            out_file_name = make_unique_name(out_file_name)
 
-        np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
-        self.save_cv_plot(out_file_name + '.png')
+            np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
+            self.save_cv_plot(out_file_name + '.png')

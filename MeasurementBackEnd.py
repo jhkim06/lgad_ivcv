@@ -21,6 +21,7 @@ class MeasurementBackend:
         self.pad_number = 1
         self.return_sweep = True
         self.live_plot = True
+        self.resources_closed = True
 
         self.n_measurement_points = 0
         self.data_index_to_draw = 0

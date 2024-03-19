@@ -5,6 +5,10 @@ from LivePlotWindow import LivePlotWindow
 from util import BaseThread
 
 
+def test_func():
+    print("test function")
+
+
 class CVMeasurementGUI:
 
     def __init__(self, combo_box_lcr, combo_box_pau,
@@ -26,7 +30,8 @@ class CVMeasurementGUI:
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
         self.button_measure = button_measure
-        self.button_measure.clicked.connect(self.request_measurement)
+        self.button_measure.setCheckable(True)
+        self.button_measure.clicked.connect(self.control_measurement)
         self.label_status = label_status
 
         self.resource_map = None
@@ -122,30 +127,35 @@ class CVMeasurementGUI:
         return (smu, pau, sensor_name, initial_voltage, final_voltage, step,
                 compliance, ac_level, return_sweep, live_plot)
 
-    def request_measurement(self):
+    def control_measurement(self):
+        if self.button_measure.isChecked():
+            self.button_measure.setText("Stop Measurement")
+            print("start measurement btn clicked")
+            self.measurement.initialize_measurement(pau_addr=self.get_pau_addr(), lcr_addr=self.get_lcr_addr(),
+                                                    sensor_name=self.get_sensor_name())
 
-        self.measurement.initialize_measurement(pau_addr=self.get_pau_addr(), lcr_addr=self.get_lcr_addr(),
-                                                sensor_name=self.get_sensor_name())
+            # TODO measurement according to switch selection
+            self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),
+                                                     voltage_step=self.get_voltage_step(),
+                                                     frequency=self.get_frequency(), ac_level=self.get_ac_level(),
+                                                     return_sweep=self.get_return_sweep(),
+                                                     pad_number=1, live_plot=self.get_live_plot())
+            self.label_status.setText("Start measurement...")
+            self.measurement.start_measurement()
 
-        # TODO measurement according to switch selection
-        self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),
-                                                 voltage_step=self.get_voltage_step(),
-                                                 frequency=self.get_frequency(), ac_level=self.get_ac_level(),
-                                                 return_sweep=self.get_return_sweep(),
-                                                 pad_number=1, live_plot=self.get_live_plot())
-        self.label_status.setText("Start measurement...")
-        self.measurement.start_measurement()
+            update_thread = BaseThread(target=self.update_status_label, callback=self.measure_btn_reset)
+            update_thread.start()
 
-        update_thread = BaseThread(target=self.update_status_label)
-        update_thread.start()
-
-        if self.get_live_plot():
-            self.w = LivePlotWindow(self.measurement)
+            if self.get_live_plot():
+                # TODO, pass position of main window and use it to draw graph beside the window
+                self.w = LivePlotWindow(self.measurement)
+            else:
+                pass
         else:
-            pass
+            self.stop_measurement()
+            self.button_measure.setText("Start Measurement")
 
     def update_status_label(self):
-
         status_str = ''
         while self.measurement.is_measurement_in_progress():
             temp_str = self.measurement.get_status_str()
@@ -154,3 +164,14 @@ class CVMeasurementGUI:
                 self.label_status.setText(status_str)
             time.sleep(0.1)
         self.label_status.setText("CV measurement DONE, output path: " + self.measurement.get_out_dir())
+
+    def measure_btn_reset(self):
+        current_text = self.button_measure.text()
+        if current_text == "Stop Measurement":
+            self.button_measure.setText("Start Measurement")
+            self.button_measure.setChecked(False)
+
+    def stop_measurement(self):
+        self.measurement.stop_measurement()
+        self.w.close()
+        self.measure_btn_reset()
