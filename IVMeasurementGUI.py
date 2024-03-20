@@ -15,16 +15,18 @@ class IVMeasurementGUI:
         # Widgets
         self.combo_box_smu = combo_box_smu
         self.combo_box_pau = combo_box_pau
+
         self.line_edit_sensor_name = line_edit_sensor_name
         self.line_edit_initial_voltage = line_edit_initial_voltage
         self.line_edit_final_voltage = line_edit_final_voltage
         self.line_edit_voltage_step = line_edit_voltage_step
-        self.line_edit_current_compliance = line_edit_current_compliance
         self.check_box_return_sweep = check_box_return_sweep
         self.check_box_live_plot = check_box_live_plot
         self.button_measure = button_measure
         self.button_measure.clicked.connect(self.request_measurement)
         self.label_status = label_status
+
+        self.line_edit_current_compliance = line_edit_current_compliance
 
         self.resource_map = None
 
