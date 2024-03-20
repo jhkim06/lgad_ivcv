@@ -21,6 +21,7 @@ class CVMeasurementGUI(MeasurementGUI):
 
         self.button_measure.clicked.connect(self.control_measurement)
 
+        # CV specific options
         self.line_edit_frequency = line_edit_frequency
         self.line_edit_ac_level = ac_level
 

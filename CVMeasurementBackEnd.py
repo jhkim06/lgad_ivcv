@@ -11,8 +11,6 @@ from util import BaseThread
 from MeasurementBackEnd import MeasurementBackend
 import matplotlib.pyplot as plt
 
-from threading import Event
-
 
 CURRENT_COMPLIANCE = 10e-6
 
@@ -37,9 +35,6 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pad_number = 1
         self.return_sweep = True
         self.live_plot = True
-
-        self.event = Event()
-        self.measurement_thread = None
 
         self.x_axis_label = 'Bias Voltage (V)'
         self.y_axis_label = 'Capacitance (F)'

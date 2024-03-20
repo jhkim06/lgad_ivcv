@@ -20,6 +20,7 @@ class IVMeasurementGUI(MeasurementGUI):
 
         self.button_measure.clicked.connect(self.control_measurement)
 
+        # IV specific options
         self.line_edit_current_compliance = line_edit_current_compliance
 
         self.measurement = IVMeasurementBackend()

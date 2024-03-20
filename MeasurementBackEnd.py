@@ -2,6 +2,7 @@ import os
 from util import mkdir, getdate
 import matplotlib.pyplot as plt
 import numpy as np
+from threading import Event
 
 
 class MeasurementBackend:
@@ -22,6 +23,9 @@ class MeasurementBackend:
         self.return_sweep = True
         self.live_plot = True
         self.resources_closed = True
+
+        self.event = Event()
+        self.measurement_thread = None
 
         self.n_measurement_points = 0
         self.data_index_to_draw = 0

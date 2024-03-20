@@ -55,6 +55,7 @@ class IVMeasurementBackend(MeasurementBackend):
 
         self.smu.get_idn()
         self.pau.get_idn()
+        self.resources_closed = False
 
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,
                                 current_compliance, return_sweep, pad_number, live_plot):
@@ -66,14 +67,15 @@ class IVMeasurementBackend(MeasurementBackend):
         self.live_plot = live_plot
         self.pad_number = pad_number
 
-    def _safe_escaper(self, signumm, frame):
+    def _safe_escaper(self):
         print("User interrupt...")
         self.smu.set_voltage(0)
         self.smu.set_output('off')
         self.smu.close()
         self.pau.close()
+        self.resources_closed = True
         print("WARNING: Please make sure the output is turned off!")
-        exit(1)
+        # exit(1)
 
     def _make_voltage_array(self):
         n_measurement_points = abs(int(self.final_voltage - self.initial_voltage)) + 1
@@ -86,7 +88,7 @@ class IVMeasurementBackend(MeasurementBackend):
         self.data_index_to_draw = 0
         return voltage_array
 
-    def _measure(self, voltage_array):
+    def _measure(self, voltage_array, event):
         self.measurement_in_progress = True
         for index, voltage in enumerate(voltage_array):
             self.smu.set_voltage(voltage)
@@ -104,11 +106,13 @@ class IVMeasurementBackend(MeasurementBackend):
             if self.return_sweep and index > len(voltage_array) / 2:
                 self.return_sweep_started = True
 
+            if event.is_set():
+                self._safe_escaper()
+                break
         self.measurement_in_progress = False
         self.return_sweep_started = False
 
     def start_measurement(self):
-
         self.smu.set_current_limit(self.current_compliance)
         signal.signal(signal.SIGINT, self._safe_escaper)
 
@@ -120,24 +124,32 @@ class IVMeasurementBackend(MeasurementBackend):
 
         # if live_plot then use thread to measure else don't use thread
         if self.live_plot:
-            measurement_thread = BaseThread(target=self._measure, args=(voltage_array,),
+            self.event.clear()
+            self.measurement_thread = BaseThread(target=self._measure, args=(voltage_array, self.event),
                                             callback=self.save_results)
-            measurement_thread.start()
+            self.measurement_thread.start()
 
         else:
             self._measure(voltage_array)
             self.save_results()
 
+    def stop_measurement(self):
+        self.event.set()
+        self.measurement_thread.join()
+
     def save_results(self):
-        self.smu.set_voltage(0)
-        self.smu.set_output('off')
-        self.smu.close()
-        self.pau.close()
+        if self.resources_closed is False:
 
-        file_name = (f'IV_SMU+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}'
-                     f'_pad{self.pad_number}')
-        out_file_name = os.path.join(self.out_dir_path, file_name)
-        out_file_name = make_unique_name(out_file_name)
+            self.smu.set_voltage(0)
+            self.smu.set_output('off')
+            self.smu.close()
+            self.pau.close()
+            self.resources_closed = True
 
-        np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
-        self.save_as_plot(out_file_name + '.png')
+            file_name = (f'IV_SMU+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}'
+                         f'_pad{self.pad_number}')
+            out_file_name = os.path.join(self.out_dir_path, file_name)
+            out_file_name = make_unique_name(out_file_name)
+
+            np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
+            self.save_as_plot(out_file_name + '.png')
