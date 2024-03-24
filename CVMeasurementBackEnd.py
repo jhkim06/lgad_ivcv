@@ -91,28 +91,27 @@ class CVMeasurementBackend(MeasurementBackend):
 
     def _make_voltage_array(self):
         n_measurement_points = abs(int(self.final_voltage - self.initial_voltage)) + 1
-        voltage_array = np.linspace(self.initial_voltage, self.final_voltage,
-                                    n_measurement_points)
+        self.voltage_array = np.linspace(self.initial_voltage, self.final_voltage,
+                                         n_measurement_points)
 
         if self.initial_voltage_more_points is not None and self.final_voltage_more_points is not None:
             if (self.initial_voltage_more_points > self.final_voltage and
                     self.final_voltage_more_points > self.final_voltage):
-                voltage_arr_low = voltage_array[voltage_array > self.initial_voltage_more_points]
-                voltage_arr_high = voltage_array[voltage_array < self.final_voltage_more_points]
+                voltage_arr_low = self.voltage_array[self.voltage_array > self.initial_voltage_more_points]
+                voltage_arr_high = self.voltage_array[self.voltage_array < self.final_voltage_more_points]
                 voltage_arr_medium = np.linspace(self.initial_voltage_more_points, self.final_voltage_more_points,
                                                  n_measurement_points)
-                voltage_array = np.concatenate([voltage_arr_low, voltage_arr_medium, voltage_arr_high])
+                self.voltage_array = np.concatenate([voltage_arr_low, voltage_arr_medium, voltage_arr_high])
 
         if self.return_sweep:
-            voltage_array = np.concatenate([voltage_array, voltage_array[::-1]])
+            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]])
 
-        self.n_measurement_points = len(voltage_array)
+        self.n_measurement_points = len(self.voltage_array)
         self.data_index_to_draw = 0
-        return voltage_array
 
-    def _measure(self, voltage_array, event):
+    def _measure(self):
         self.measurement_in_progress = True
-        for index, voltage in enumerate(voltage_array):
+        for index, voltage in enumerate(self.voltage_array):
             if voltage > 0:
                 print("Warning: positive bias is not allowed. Set DC voltage to 0.")
                 voltage = 0
@@ -132,17 +131,15 @@ class CVMeasurementBackend(MeasurementBackend):
                 capacitance = float(capacitance)
                 resistance = float(resistance)
             except Exception as exception:
-                print(type(exception).__name__)
+                print("error in _measure()", type(exception).__name__)
                 break
 
+            # print(voltage_pau, capacitance, resistance, current_pau)
             self.measurement_arr.append([voltage_pau, capacitance, resistance, current_pau])
             self.output_arr.append([voltage_pau, capacitance])
+            self.set_status_str(index)
 
-            self.status = f'{index + 1}/{len(voltage_array)} processed'
-            if self.return_sweep and index > len(voltage_array) / 2:
-                self.return_sweep_started = True
-
-            if event.is_set():
+            if self.event.is_set():
                 self._safe_escaper()
                 break
         self.measurement_in_progress = False
@@ -152,7 +149,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pau.set_current_limit(CURRENT_COMPLIANCE)
         signal.signal(signal.SIGINT, self._safe_escaper)
 
-        voltage_array = self._make_voltage_array()
+        self._make_voltage_array()
 
         self.pau.set_voltage(0)
         self.pau.set_output('ON')
@@ -164,13 +161,13 @@ class CVMeasurementBackend(MeasurementBackend):
         if self.live_plot:
             self.event.clear()
             # do measurement in a thread, when finished save_results method called as callback
-            self.measurement_thread = BaseThread(target=self._measure, args=(voltage_array, self.event),
+            self.measurement_thread = BaseThread(target=self._measure,
                                                  callback=self.save_results)
             self.measurement_thread.start()
             # TODO update status inside measurement thread?
         else:
             # TODO need to check if it works without problems
-            self._measure(voltage_array)
+            self._measure()
             self.save_results()
 
     def stop_measurement(self):

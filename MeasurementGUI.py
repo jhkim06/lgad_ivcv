@@ -101,7 +101,7 @@ class MeasurementGUI:
             update_thread = BaseThread(target=self.update_status_label, callback=self.measure_btn_reset)
             update_thread.start()
 
-            if self.get_return_sweep():
+            if self.get_live_plot():
                 self.w = LivePlotWindow(self.measurement)
             else:
                 pass

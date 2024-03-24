@@ -23,8 +23,9 @@ class MeasurementBackend:
         self.return_sweep = True
         self.live_plot = True
         self.resources_closed = True
+        self.voltage_array = None
 
-        self.event = Event()
+        self.event = Event()  # to control measurement thread
         self.measurement_thread = None
 
         self.n_measurement_points = 0
@@ -94,6 +95,11 @@ class MeasurementBackend:
             return True
         else:
             return False
+
+    def set_status_str(self, index):
+        self.status = f'{index + 1}/{len(self.voltage_array)} processed'
+        if self.return_sweep and index > len(self.voltage_array) / 2:
+            self.return_sweep_started = True
 
     def save_as_plot(self, out_file_name):
         plt.ioff()
