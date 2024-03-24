@@ -1,3 +1,5 @@
+from typing import Tuple, Any
+
 from drivers.Keithley2400 import Keithley2400
 from drivers.Keithley6487 import Keithley6487
 import os
@@ -96,7 +98,7 @@ class IVMeasurementBackend(MeasurementBackend):
             voltage_smu = float(voltage_smu)
             current_smu = float(current_smu)
             current_pau = float(current_pau[:-1])
-            print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
+            # print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
 
             self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
             self.output_arr.append([voltage, current_pau])
@@ -110,7 +112,7 @@ class IVMeasurementBackend(MeasurementBackend):
 
     def start_measurement(self):
         self.smu.set_current_limit(self.current_compliance)
-        signal.signal(signal.SIGINT, self._safe_escaper)
+        # signal.signal(signal.SIGINT, self._safe_escaper)
 
         self._make_voltage_array()
 
@@ -118,16 +120,10 @@ class IVMeasurementBackend(MeasurementBackend):
         self.smu.set_output('on')
         time.sleep(1)
 
-        # if live_plot then use thread to measure else don't use thread
-        if self.live_plot:
-            self.event.clear()
-            self.measurement_thread = BaseThread(target=self._measure,
-                                                 callback=self.save_results)
-            self.measurement_thread.start()
-
-        else:
-            self._measure()
-            self.save_results()
+        self.event.clear()
+        self.measurement_thread = BaseThread(target=self._measure,
+                                             callback=self.save_results)
+        self.measurement_thread.start()
 
     def stop_measurement(self):
         self.event.set()

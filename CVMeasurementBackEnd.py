@@ -147,7 +147,7 @@ class CVMeasurementBackend(MeasurementBackend):
 
     def start_measurement(self):
         self.pau.set_current_limit(CURRENT_COMPLIANCE)
-        signal.signal(signal.SIGINT, self._safe_escaper)
+        # signal.signal(signal.SIGINT, self._safe_escaper)
 
         self._make_voltage_array()
 
@@ -158,17 +158,11 @@ class CVMeasurementBackend(MeasurementBackend):
         self.lcr.set_freq(self.frequency)
         time.sleep(1)
 
-        if self.live_plot:
-            self.event.clear()
-            # do measurement in a thread, when finished save_results method called as callback
-            self.measurement_thread = BaseThread(target=self._measure,
-                                                 callback=self.save_results)
-            self.measurement_thread.start()
-            # TODO update status inside measurement thread?
-        else:
-            # TODO need to check if it works without problems
-            self._measure()
-            self.save_results()
+        self.event.clear()
+        # do measurement in a thread, when finished save_results method called as callback
+        self.measurement_thread = BaseThread(target=self._measure,
+                                             callback=self.save_results)
+        self.measurement_thread.start()
 
     def stop_measurement(self):
         self.event.set()
