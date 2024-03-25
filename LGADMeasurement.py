@@ -10,6 +10,7 @@ from enum import Enum
 
 from IVMeasurementGUI import IVMeasurementGUI
 from CVMeasurementGUI import CVMeasurementGUI
+from SwitchMatrixGUI import SwitchMatrixGUI
 
 
 class MeasurementType(Enum):
@@ -36,9 +37,10 @@ class LGADMeasurement(QDialog):
         self.ui.tabWidget.currentChanged.connect(self._current_tab_changed)
 
         # TODO check if switch is available
-        self.ui.comboBoxSwitch.setEnabled(True)
+        # self.ui.comboBoxSwitch.setEnabled(True)
         # TODO request available switches and show them in the combo box
-        self.ui.comboBoxSwitch.addItems(['1', '2', '3', '4', '2x2'])
+        # self.ui.comboBoxSwitch.addItems(['0', '1', '2', '3', '4', '5' 'All'])
+        self.sw_gui = SwitchMatrixGUI(self.ui.comboBoxSwitch, self.ui.labelSwitchMatrix)
 
         # initialize GUI for each experiment
         self.iv_gui = IVMeasurementGUI(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
