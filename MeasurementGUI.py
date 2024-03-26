@@ -4,7 +4,7 @@ from util import BaseThread
 
 
 class MeasurementGUI:
-    def __init__(self, line_edit_sensor_name, line_edit_initial_voltage, line_edit_final_voltage,
+    def __init__(self, line_edit_sensor_name, combo_box_pad_num, line_edit_initial_voltage, line_edit_final_voltage,
                  line_edit_voltage_step, check_box_return_sweep, check_box_live_plot,
                  button_measure, label_status):
 
@@ -13,6 +13,8 @@ class MeasurementGUI:
         self.combo_box_lcr = None
 
         self.line_edit_sensor_name = line_edit_sensor_name
+        self.combo_box_pad_num = combo_box_pad_num
+        self.combo_box_pad_num.addItems(['0', '1', '2', '3', '4', '5', 'use switch number'])
         self.line_edit_initial_voltage = line_edit_initial_voltage
         self.line_edit_final_voltage = line_edit_final_voltage
         self.line_edit_voltage_step = line_edit_voltage_step
@@ -46,6 +48,10 @@ class MeasurementGUI:
 
     def get_sensor_name(self):
         return self.line_edit_sensor_name.text()
+
+    def get_pad_number(self):
+        # TODO if 'use switch number' then return switch number
+        return int(self.combo_box_pad_num.currentText())
 
     def get_initial_voltage(self):
         return int(self.line_edit_initial_voltage.text())

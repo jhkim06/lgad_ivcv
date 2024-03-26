@@ -5,13 +5,13 @@ from MeasurementGUI import MeasurementGUI
 class CVMeasurementGUI(MeasurementGUI):
 
     def __init__(self, combo_box_lcr, combo_box_pau,
-                 line_edit_sensor_name, line_edit_initial_voltage, line_edit_final_voltage,
+                 line_edit_sensor_name, combo_box_pad_num, line_edit_initial_voltage, line_edit_final_voltage,
                  line_edit_voltage_step, line_edit_frequency,
                  ac_level,
                  check_box_return_sweep, check_box_live_plot,
                  button_measure, label_status):
 
-        super().__init__(line_edit_sensor_name, line_edit_initial_voltage, line_edit_final_voltage,
+        super().__init__(line_edit_sensor_name, combo_box_pad_num, line_edit_initial_voltage, line_edit_final_voltage,
                          line_edit_voltage_step, check_box_return_sweep, check_box_live_plot,
                          button_measure, label_status)
 
@@ -88,4 +88,4 @@ class CVMeasurementGUI(MeasurementGUI):
                                                  voltage_step=self.get_voltage_step(),
                                                  frequency=self.get_frequency(), ac_level=self.get_ac_level(),
                                                  return_sweep=self.get_return_sweep(),
-                                                 pad_number=1, live_plot=self.get_live_plot())
+                                                 pad_number=self.get_pad_number(), live_plot=self.get_live_plot())
