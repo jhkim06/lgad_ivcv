@@ -39,7 +39,6 @@ class LGADMeasurement(QDialog):
         # TODO check if switch is available
         # self.ui.comboBoxSwitch.setEnabled(True)
         # TODO request available switches and show them in the combo box
-        # self.ui.comboBoxSwitch.addItems(['0', '1', '2', '3', '4', '5' 'All'])
         self.sw_gui = SwitchMatrixGUI(self.ui.comboBoxSwitch, self.ui.labelSwitchMatrix)
 
         # initialize GUI for each experiment
