@@ -1,0 +1,116 @@
+import matplotlib.pyplot as plt
+import mplhep as hep
+import numpy as np
+from matplotlib.offsetbox import AnchoredText
+from typing import List, Dict, Any
+
+axis_label_font_size = 25
+
+
+class Plotter:
+    def __init__(self, experiment, base_output_dir, **kwargs):
+
+        self.experiment = experiment
+        hep.style.use(self.experiment)
+        plt.ioff()  # interactive mode off; not to show figures on creation
+
+        plt.rcParams['axes.linewidth'] = 2.0
+        plt.rcParams['hatch.linewidth'] = 0.5
+
+        self.rows = 1
+        self.cols = 1
+
+        self.fig = None
+        self.axs = None
+        self.current_axis = None
+
+        self.data = []
+        self.data_kwargs: List[Dict[str, Any]] = []
+
+        # make directory to save plots
+        self.base_output_dir = base_output_dir
+        self.out_dir = ''
+
+    def create_subplots(self, rows=1, cols=1, figsize=(8, 8), **gridspec_kw):
+        # update self.rows and self.cols
+        if rows != self.rows:
+            self.rows = rows
+        if cols != self.cols:
+            self.cols = cols
+
+        self.fig, self.axs = plt.subplots(self.rows,
+                                          self.cols,
+                                          figsize=figsize,
+                                          gridspec_kw=gridspec_kw)
+        plt.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.9, hspace=0.05)
+
+    def set_current_axis(self, row=1, col=1):
+        if self.rows == 1 and self.cols == 1:
+            self.current_axis = self.axs
+        elif self.rows == 1 or self.cols == 1:
+            if self.rows == 1:
+                index = col
+            else:
+                index = row
+            self.current_axis = self.axs[index]
+        else:
+            self.current_axis = self.axs[row][col]
+
+    def get_current_axis(self):
+        return self.current_axis
+
+    def add_input_data(self, path, **kwargs):
+        # read txt file using numpy
+        input_data = np.loadtxt(path)
+        self.data.append(input_data)
+        self.data_kwargs.append(kwargs)
+
+    def set_experiment_label(self, label=""):
+        self.current_axis.draw(self.current_axis.figure.canvas.get_renderer())
+        is_data = True
+        if label == "Simulation":
+            is_data = False
+            label = ""
+        # plt.rcParams['text.usetex'] = False
+        hep.cms.label(label,
+                      data=is_data,
+                      ax=self.current_axis,
+                      rlabel='',  # remove energy
+                      loc=0,
+                      pad=.0)
+        # plt.rcParams['text.usetex'] = True
+
+    def set_y_label(self, label):
+        self.current_axis.set_ylabel(label, fontsize=axis_label_font_size)
+
+    def set_x_label(self, label):
+        self.current_axis.set_xlabel(label, fontsize=axis_label_font_size)
+
+    def write_text(self, text, loc='upper left'):
+        at = AnchoredText(text, loc=loc, prop=dict(size=20), frameon=False)
+        at.patch.set_boxstyle("round, pad=0., rounding_size=0.2")
+        self.current_axis.add_artist(at)
+        # hep.mpl_magic(self.current_axis)
+
+    def draw(self, x_index=0, y_index=1):
+        for data_index, this_data in enumerate(self.data):
+            x = this_data.T[x_index]
+            y = this_data.T[y_index]
+            self.current_axis.errorbar(x, y,
+                                       **self.data_kwargs[data_index], )
+        # hep.plot.hist_legend(self.current_axis, loc='best')
+        self.current_axis.grid(axis='y')
+        self.current_axis.grid(axis='x')
+        # self.current_axis.set_yscale("log")
+        # hep.plot.mpl_magic(self.current_axis)
+
+    def show_legend(self, loc='best'):
+        hep.plot.hist_legend(self.current_axis, loc=loc, fontsize=15)
+
+    def save_fig(self, out_name=''):
+        out_file_name = out_name
+
+        print(f"save plot... {out_file_name}")
+        self.fig.savefig(self.out_dir + out_file_name + ".pdf")
+        # self.reset()
+        plt.close()

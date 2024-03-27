@@ -33,7 +33,7 @@ class IVMeasurementBackend(MeasurementBackend):
         self.y_axis_label = 'Current (I)'
 
         self.out_txt_header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'
-        self.base_path = r'C:\LGAD_test\I-V_test'
+        self.base_path += r'\I-V_test'
 
     def initialize_measurement(self, smu_addr, pau_addr, sensor_name):
 

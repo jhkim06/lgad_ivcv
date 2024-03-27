@@ -40,7 +40,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.y_axis_label = 'Capacitance (F)'
 
         self.out_txt_header = 'Vpau(V)\tC(F)\tR(Ohm)\tIpau(A)'
-        self.base_path = r'C:\LGAD_test\C-V_test'
+        self.base_path += r'\C-V_test'
 
     def initialize_measurement(self, lcr_addr, pau_addr, sensor_name):
 

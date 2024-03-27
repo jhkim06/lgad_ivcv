@@ -37,10 +37,11 @@ class MeasurementBackend:
         self.measurement_in_progress = False
         self.status = ''
         self.out_txt_header = ''
-        self.base_path = ''
+        self.base_path = r'C:\LGAD_test'
         self.date = ''
         self.out_dir_path = ''
 
+        # for live plot
         self.y_axis_label = ''
         self.x_axis_label = ''
 
