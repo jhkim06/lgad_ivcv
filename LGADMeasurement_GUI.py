@@ -15,6 +15,8 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(718, 472)
+        Dialog.setMinimumSize(QtCore.QSize(718, 472))
+        Dialog.setMaximumSize(QtCore.QSize(718, 472))
         self.tabWidget = QtWidgets.QTabWidget(Dialog)
         self.tabWidget.setGeometry(QtCore.QRect(20, 60, 681, 371))
         self.tabWidget.setFocusPolicy(QtCore.Qt.TabFocus)
