@@ -6,6 +6,7 @@ import pylab as plt
 import pyvisa
 from .gpibbase import GPIBBase
 
+
 class Keithley6487(GPIBBase):
     def __init__(self, rname=None):
         if rname is not None:

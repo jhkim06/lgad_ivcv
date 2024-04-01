@@ -4,6 +4,7 @@ import pyvisa
 from .gpibbase import GPIBBase
 #from . import gpibbase
 
+
 class Keithley2400(GPIBBase):
     _delay = 0.005
 

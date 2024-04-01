@@ -3,6 +3,7 @@ import pyvisa
 
 from .gpibbase import GPIBBase
 
+
 class WayneKerr4300(GPIBBase):
     def __init__(self, rname=None):
         if rname is not None: 
