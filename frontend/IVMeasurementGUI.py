@@ -1,5 +1,5 @@
-from IVMeasurementBackEnd import IVMeasurementBackend
-from MeasurementGUI import MeasurementGUI
+from backend.IVMeasurementBackEnd import IVMeasurementBackend
+from frontend.MeasurementGUI import MeasurementGUI
 
 
 class IVMeasurementGUI(MeasurementGUI):

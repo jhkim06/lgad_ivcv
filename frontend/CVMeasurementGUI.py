@@ -1,5 +1,5 @@
-from CVMeasurementBackEnd import CVMeasurementBackend
-from MeasurementGUI import MeasurementGUI
+from backend.CVMeasurementBackEnd import CVMeasurementBackend
+from frontend.MeasurementGUI import MeasurementGUI
 
 
 class CVMeasurementGUI(MeasurementGUI):

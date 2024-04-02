@@ -1,5 +1,5 @@
 import time
-from LivePlotWindow import LivePlotWindow
+from frontend.LivePlotWindow import LivePlotWindow
 from util import BaseThread
 
 

@@ -8,7 +8,7 @@ import numpy as np
 import time
 from util import make_unique_name
 from util import BaseThread
-from MeasurementBackEnd import MeasurementBackend
+from backend.MeasurementBackEnd import MeasurementBackend
 import matplotlib.pyplot as plt
 
 

@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QDialog
-from LGADMeasurement_GUI import *
+from frontend.LGADMeasurement_GUI import *
 
 import sys
 from PyQt5.QtWidgets import QApplication
@@ -8,9 +8,9 @@ from PyQt5.QtGui import QIcon
 import pyvisa
 from enum import Enum
 
-from IVMeasurementGUI import IVMeasurementGUI
-from CVMeasurementGUI import CVMeasurementGUI
-from SwitchMatrixGUI import SwitchMatrixGUI
+from frontend.IVMeasurementGUI import IVMeasurementGUI
+from frontend.CVMeasurementGUI import CVMeasurementGUI
+from frontend.SwitchMatrixGUI import SwitchMatrixGUI
 
 
 class MeasurementType(Enum):
