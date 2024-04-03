@@ -102,7 +102,7 @@ class Plotter:
         self.set_current_axis(location)
         self.current_axis.set_ylabel(label, fontsize=self.axis_label_font_size)
 
-    def set_x_label(self, label, location=(0,0)):
+    def set_x_label(self, label, location=(0, 0)):
         self.set_current_axis(location)
         self.current_axis.set_xlabel(label, fontsize=self.axis_label_font_size)
 

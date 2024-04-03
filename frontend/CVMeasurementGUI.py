@@ -1,6 +1,10 @@
 from backend.CVMeasurementBackEnd import CVMeasurementBackend
 from frontend.MeasurementGUI import MeasurementGUI
 
+# FIXME use first time setup to set ID for devices
+LCR_ID = "LCR meter"
+PAU_ID = "MODEL 6487"
+
 
 class CVMeasurementGUI(MeasurementGUI):
 
@@ -16,6 +20,8 @@ class CVMeasurementGUI(MeasurementGUI):
                          button_measure, label_status)
 
         # Widgets
+        # lcr:
+        # pau:
         self.combo_box_lcr = combo_box_lcr
         self.combo_box_pau = combo_box_pau
 
@@ -39,8 +45,14 @@ class CVMeasurementGUI(MeasurementGUI):
 
     def set(self, resource_map, sensor_name, initial_voltage, final_voltage, voltage_step,
             frequency, ac_level, live_plot, return_sweep):
+
         self.resource_map = resource_map
-        self.set_combo_box_items([*self.resource_map.keys()])
+        id_list = [*self.resource_map.keys()]
+        index_lcr = id_list.index(LCR_ID)
+        index_pau = id_list.index(PAU_ID)
+        self.set_combo_box_items(id_list)
+        self.combo_box_lcr.setCurrentIndex(index_lcr)
+        self.combo_box_pau.setCurrentIndex(index_pau)
         self.set_sensor_name(sensor_name)
         self.set_initial_voltage(initial_voltage)
         self.set_final_voltage(final_voltage)

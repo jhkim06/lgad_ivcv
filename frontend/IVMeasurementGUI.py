@@ -1,6 +1,10 @@
 from backend.IVMeasurementBackEnd import IVMeasurementBackend
 from frontend.MeasurementGUI import MeasurementGUI
 
+# FIXME use first time setup to set ID for devices
+SMU_ID = "MODEL 2410"
+PAU_ID = "MODEL 6487"
+
 
 class IVMeasurementGUI(MeasurementGUI):
 
@@ -34,8 +38,14 @@ class IVMeasurementGUI(MeasurementGUI):
 
     def set(self, resource_map, sensor_name, initial_voltage, final_voltage, voltage_step,
             current_compliance, live_plot, return_sweep):
+
         self.resource_map = resource_map
-        self.set_combo_box_items([*self.resource_map.keys()])
+        id_list = [*self.resource_map.keys()]
+        index_smu = id_list.index(SMU_ID)
+        index_pau = id_list.index(PAU_ID)
+        self.set_combo_box_items(id_list)
+        self.combo_box_smu.setCurrentIndex(index_smu)
+        self.combo_box_pau.setCurrentIndex(index_pau)
         self.set_sensor_name(sensor_name)
         self.set_initial_voltage(initial_voltage)
         self.set_final_voltage(final_voltage)
