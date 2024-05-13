@@ -29,21 +29,30 @@ class Keithley6487(GPIBBase):
     
     def set_zero(self):
         self.write("FUNC 'curr'")
+
         self.write("SYST:ZCH ON")
         self.write("CURR:RANG 2e-9")
         self.write("INIT")
         self.write("SYST:ZCOR:STAT OFF")
         self.write("SYST:ZCOR:ACQ")
         self.write("SYST:ZCOR ON")
+
         self.write("CURR:RANG:AUTO ON")
         self.write("SYST:ZCH OFF")
 
-    def initialize(self):
+    def initialize_full(self):
         self.reset()
         self.set_zero()
         self.write("SOUR:VOLT:STAT OFF")
         self.write("SOUR:VOLT:RANG 500")
         self.write("FORM:ELEM READ,UNIT,STAT,VSO")
+
+    def initialize(self):
+        self.reset()
+        self.write("FUNC 'curr'")  # just to be sure
+        self.write("INIT")  # TODO check without this line
+        self.write("CURR:RANG:AUTO ON")
+        self.write("SYST:ZCH OFF")
 
     def get_current_range(self):
         self.query("CURR:RANGE?")

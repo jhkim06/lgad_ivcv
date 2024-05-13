@@ -119,7 +119,7 @@ class Plotter:
         # hep.mpl_magic(self.current_axis)
 
     def draw(self, x_index=0, y_index=1, remove_offset=False, flip_x=False, flip_y=False,
-             draw_half=False):
+             draw_half=False, draw_second_half=False):
         for data_index, this_data in enumerate(self.data):
             x = this_data.T[x_index]
             y = this_data.T[y_index]
@@ -132,7 +132,10 @@ class Plotter:
             if draw_half:
                 x = x[:len(x)//2]
                 y = y[:len(y)//2]
-            row, col = self.data_loc[data_index]
+            if draw_second_half:
+                x = x[len(x)//2:]
+                y = y[len(y)//2:]
+            row, col =self.data_loc[data_index]
             self.set_current_axis((row, col))
             self.current_axis.errorbar(x, y,
                                        **self.data_kwargs[data_index], )

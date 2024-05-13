@@ -52,8 +52,7 @@ class IVMeasurementBackend(MeasurementBackend):
         self.smu.set_voltage_range(200)
 
         self.pau.open(self.pau_address)
-        self.pau.reset()
-        self.pau.set_zero()
+        self.pau.initialize()
 
         self.smu.get_idn()
         self.pau.get_idn()
