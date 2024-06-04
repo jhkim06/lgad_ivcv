@@ -77,7 +77,7 @@ class Plotter:
     def do_get_renderer(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                self.set_current_axis(row, col)
+                self.set_current_axis((row, col))
                 self.current_axis.draw(self.current_axis.figure.canvas.get_renderer())
 
     def set_experiment_label(self, location=(0, 0), label="", fontsize=20, pad=0):
