@@ -11,7 +11,7 @@ class SwitchMatrixGUI:
         self.comm = USBComm(usb_port)
         if self.comm.is_connected():
             self.status_label.setText(usb_port + " is connected")
-            self.combo_box.addItems(['0', '1', '2', '3', '4', '5', 'All'])
+            self.combo_box.addItems(['0', '15', '7', '8', 'All'])
             self.combo_box.currentIndexChanged.connect(self.set_switch)
             self.set_switch()
         else:
@@ -20,6 +20,13 @@ class SwitchMatrixGUI:
 
     def set_switch(self):
         current_index = self.combo_box.currentIndex()
+        #
+        if current_index == 1:
+            current_index = 15
+        if current_index == 2:
+            current_index = 7
+        if current_index == 3:
+            current_index = 8
         msg = self.comm.send_data(current_index)
         print(msg)
         self.status_label.setText(msg)

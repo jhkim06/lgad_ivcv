@@ -42,11 +42,14 @@ class IVMeasurementGUI(MeasurementGUI):
         self.resource_map = resource_map
         # FIXME handle case no connected devices
         id_list = [*self.resource_map.keys()]
-        index_smu = id_list.index(SMU_ID)
-        index_pau = id_list.index(PAU_ID)
         self.set_combo_box_items(id_list)
-        self.combo_box_smu.setCurrentIndex(index_smu)
-        self.combo_box_pau.setCurrentIndex(index_pau)
+        try:
+            index_smu = id_list.index(SMU_ID)
+            index_pau = id_list.index(PAU_ID)
+            self.combo_box_smu.setCurrentIndex(index_smu)
+            self.combo_box_pau.setCurrentIndex(index_pau)
+        except ValueError as e:
+            print("Check", e)
 
         self.set_sensor_name(sensor_name)
         self.set_initial_voltage(initial_voltage)
