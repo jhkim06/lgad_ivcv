@@ -40,7 +40,7 @@ class Keithley6487(GPIBBase):
         self.write("CURR:RANG:AUTO ON")
         self.write("SYST:ZCH OFF")
 
-    def initialize_full(self):
+    def initialize_full(self):  # use this for CV measuremnet, not clear why
         self.reset()
         self.set_zero()
         self.write("SOUR:VOLT:STAT OFF")

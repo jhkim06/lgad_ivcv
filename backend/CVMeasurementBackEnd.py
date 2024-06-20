@@ -25,10 +25,10 @@ class CVMeasurementBackend(MeasurementBackend):
         self.lcr_address = lcr_addr
         self.pau_address = pau_addr
         self.initial_voltage = 0
-        self.final_voltage = -50
+        self.final_voltage = -60
         self.initial_voltage_more_points = -40  # -15, -40 (according to gain layer design)
         self.final_voltage_more_points = -50  # -25, -50
-        self.voltage_step = 50
+        self.voltage_step = 60
         self.data_points = -1
         self.ac_level = 0.1
         self.frequency = 1000
@@ -59,7 +59,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.lcr.set_dc_voltage(0)
 
         self.pau.open(self.pau_address)
-        self.pau.initialize()
+        self.pau.initialize_full()
 
         self.lcr.get_idn()
         self.pau.get_idn()
