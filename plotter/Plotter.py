@@ -4,6 +4,9 @@ import numpy as np
 from matplotlib.offsetbox import AnchoredText
 from typing import List, Dict, Any
 
+prop_cycle = plt.rcParams['axes.prop_cycle']
+colors = prop_cycle.by_key()['color']
+
 
 class Plotter:
     def __init__(self, experiment, base_output_dir, **kwargs):
@@ -31,6 +34,10 @@ class Plotter:
         # make directory to save plots
         self.base_output_dir = base_output_dir
         self.out_dir = ''
+
+    def get_n_colors(self, n):
+        color_list = [color for color in colors]
+        return color_list
 
     def create_subplots(self, rows=1, cols=1, figsize=(8, 8), left=0.1, right=0.95, bottom=0.1, top=0.9,
                         hspace=0.2, wspace=0.2,

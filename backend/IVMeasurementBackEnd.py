@@ -78,34 +78,47 @@ class IVMeasurementBackend(MeasurementBackend):
         print("WARNING: Please make sure the output is turned off!")
         # exit(1)
 
-    def _make_voltage_array(self):
-        n_measurement_points = abs(int(self.final_voltage - self.initial_voltage)) + 1
-        self.voltage_array = np.linspace(self.initial_voltage, self.final_voltage,
-                                         n_measurement_points)
-        if self.return_sweep:
+    def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
+        n_measurement_points = abs(int(final_voltage - initial_voltage)) + 1
+        self.voltage_array = np.linspace(initial_voltage, final_voltage, n_measurement_points)
+
+        if initial_call and self.return_sweep:
             self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]])
+            self.data_index_to_draw = 0
 
         self.n_measurement_points = len(self.voltage_array)
-        self.data_index_to_draw = 0
+        self.n_data_drawn = 0
+
+    def _update_measurement_array(self, voltage, index, is_forced_return=False):
+        self.smu.set_voltage(voltage)
+        voltage_smu, current_smu = self.smu.read().split(',')
+        current_pau, _, _ = self.pau.read().split(',')
+        voltage_smu = float(voltage_smu)
+        current_smu = float(current_smu)
+        current_pau = float(current_pau[:-1])
+        # print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
+
+        self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
+        self.output_arr.append([voltage, current_pau])
+        self.set_status_str(index, is_forced_return)
 
     def _measure(self):
         self.measurement_in_progress = True
+        last_voltage = 0
         for index, voltage in enumerate(self.voltage_array):
-            self.smu.set_voltage(voltage)
-            voltage_smu, current_smu = self.smu.read().split(',')
-            current_pau, _, _ = self.pau.read().split(',')
-            voltage_smu = float(voltage_smu)
-            current_smu = float(current_smu)
-            current_pau = float(current_pau[:-1])
-            # print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
-
-            self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
-            self.output_arr.append([voltage, current_pau])
-            self.set_status_str(index)
-
-            if self.event.is_set():
-                self._safe_escaper()
+            self._update_measurement_array(voltage, index)
+            if self.event.is_set():  # flag in Evnet is set true, when measurement stopped by user
+                last_voltage = voltage
                 break
+
+        # start "return sweep" if the measurement stopped
+        if self.event.is_set():
+            if last_voltage < 0:
+                self._make_voltage_array(last_voltage, 0, False)
+                for index, voltage in enumerate(self.voltage_array):
+                    self._update_measurement_array(voltage, index, True)
+
+            # self._safe_escaper()
         self.measurement_in_progress = False
         self.return_sweep_started = False
 
@@ -113,7 +126,7 @@ class IVMeasurementBackend(MeasurementBackend):
         self.smu.set_current_limit(self.current_compliance)
         # signal.signal(signal.SIGINT, self._safe_escaper)
 
-        self._make_voltage_array()
+        self._make_voltage_array(self.initial_voltage, self.final_voltage)
 
         self.smu.set_voltage(0)
         self.smu.set_output('on')
@@ -125,8 +138,8 @@ class IVMeasurementBackend(MeasurementBackend):
         self.measurement_thread.start()
 
     def stop_measurement(self):
-        self.event.set()
-        self.measurement_thread.join()
+        self.event.set()  # set internal flag as true
+        # self.measurement_thread.join()
 
     def save_results(self):
         if self.resources_closed is False:

@@ -30,6 +30,7 @@ class MeasurementBackend:
 
         self.n_measurement_points = 0
         self.data_index_to_draw = 0
+        self.n_data_drawn = 0
         self.measurement_arr = []  # to save as output txt
         self.output_arr = []  # for live plot
 
@@ -82,6 +83,7 @@ class MeasurementBackend:
             if self.data_index_to_draw < len(self.output_arr):
                 data_to_draw = self.output_arr[self.data_index_to_draw]
                 self.data_index_to_draw += 1
+                self.n_data_drawn += 1
                 return data_to_draw
             else:
                 return self.output_arr[self.data_index_to_draw-1]
@@ -92,15 +94,18 @@ class MeasurementBackend:
         return self.out_dir_path
 
     def all_data_drawn(self):
-        if self.data_index_to_draw == self.n_measurement_points:
+        if self.n_data_drawn == self.n_measurement_points:
             return True
         else:
             return False
 
-    def set_status_str(self, index):
+    def set_status_str(self, index, forced_return_sweep=False):
         self.status = f'{index + 1}/{len(self.voltage_array)} processed'
-        if self.return_sweep and index > len(self.voltage_array) / 2:
+        if forced_return_sweep:
             self.return_sweep_started = True
+        else:
+            if self.return_sweep and index > len(self.voltage_array) / 2:
+                self.return_sweep_started = True
 
     def save_as_plot(self, out_file_name):
         plt.ioff()

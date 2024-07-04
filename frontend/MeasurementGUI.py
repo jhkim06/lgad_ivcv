@@ -14,7 +14,7 @@ class MeasurementGUI:
 
         self.line_edit_sensor_name = line_edit_sensor_name
         self.combo_box_pad_num = combo_box_pad_num
-        self.combo_box_pad_num.addItems(['0', '1', '2', '3', '4', '5', 'use switch number'])
+        self.combo_box_pad_num.addItems(['0', '1', '2', '3', '4', '5', '6', '7'])
         self.line_edit_initial_voltage = line_edit_initial_voltage
         self.line_edit_final_voltage = line_edit_final_voltage
         self.line_edit_voltage_step = line_edit_voltage_step
@@ -92,7 +92,7 @@ class MeasurementGUI:
 
     def stop_measurement(self):
         self.measurement.stop_measurement()
-        self.w.close()
+        # self.w.close()
         self.measure_btn_reset()
 
     def control_measurement(self):
