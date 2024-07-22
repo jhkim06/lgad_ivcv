@@ -40,12 +40,11 @@ class IVMeasurementGUI(MeasurementGUI):
             current_compliance, live_plot, return_sweep):
 
         self.resource_map = resource_map
-        # FIXME handle case no connected devices
-        id_list = [*self.resource_map.keys()]
-        self.set_combo_box_items(id_list)
+        idn_list = [*self.resource_map.keys()]
+        self.set_combo_box_items(idn_list)
         try:
-            index_smu = id_list.index(SMU_ID)
-            index_pau = id_list.index(PAU_ID)
+            index_smu = idn_list.index(SMU_ID)
+            index_pau = idn_list.index(PAU_ID)
             self.combo_box_smu.setCurrentIndex(index_smu)
             self.combo_box_pau.setCurrentIndex(index_pau)
         except ValueError as e:
@@ -59,13 +58,13 @@ class IVMeasurementGUI(MeasurementGUI):
         self.set_live_plot(live_plot)
         self.set_return_sweep(return_sweep)
 
-    def get_smu_addr(self):
-        id_name = self.combo_box_smu.currentText()
-        return self.resource_map[id_name]
+    def get_smu_visa_resource_name(self):
+        idn = self.combo_box_smu.currentText()
+        return self.resource_map[idn]
 
-    def get_pau_addr(self):
-        id_name = self.combo_box_pau.currentText()
-        return self.resource_map[id_name]
+    def get_pau_visa_resource_name(self):
+        idn = self.combo_box_pau.currentText()
+        return self.resource_map[idn]
 
     def get_current_compliance(self):
         number_str = self.line_edit_current_compliance.text()
@@ -74,8 +73,8 @@ class IVMeasurementGUI(MeasurementGUI):
         return compliance
 
     def get(self):
-        smu = self.get_smu_addr()
-        pau = self.get_pau_addr()
+        smu = self.get_smu_visa_resource_name()
+        pau = self.get_pau_visa_resource_name()
         sensor_name = self.get_sensor_name()
         initial_voltage = self.get_initial_voltage()
         final_voltage = self.get_final_voltage()
@@ -88,8 +87,9 @@ class IVMeasurementGUI(MeasurementGUI):
                 compliance, return_sweep, live_plot)
 
     def init_measurement(self):
-        self.measurement.initialize_measurement(smu_addr=self.get_smu_addr(), pau_addr=self.get_pau_addr(),
-                                                sensor_name=self.get_sensor_name())
+        self.measurement.initialize_measurement(smu_visa_resource_name=self.get_smu_visa_resource_name(), 
+                pau_visa_resource_name=self.get_pau_visa_resource_name(),
+                sensor_name=self.get_sensor_name())
 
     def set_measurement_options(self):
         self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),

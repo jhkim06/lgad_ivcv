@@ -12,14 +12,14 @@ from backend.MeasurementBackEnd import MeasurementBackend
 
 
 class IVMeasurementBackend(MeasurementBackend):
-    def __init__(self, smu_addr=None, pau_addr=None, sensor_name=None):
+    def __init__(self, smu_visa_resource_name=None, pau_visa_resource_name=None, sensor_name=None):
         super(IVMeasurementBackend, self).__init__()
         self.smu = Keithley2400()
         self.pau = Keithley6487()
 
         self.sensor_name = sensor_name
-        self.smu_address = smu_addr
-        self.pau_address = pau_addr
+        self.smu_visa_resouce_name = smu_visa_resource_name
+        self.pau_visa_resouce_name = pau_visa_resource_name
         self.initial_voltage = 0
         self.final_voltage = -250
         self.voltage_step = 250
@@ -35,27 +35,27 @@ class IVMeasurementBackend(MeasurementBackend):
         self.out_txt_header = 'Vsmu(V)\tIsmu(A)\tIpau(A)'
         self.base_path += r'\I-V_test'
 
-    def initialize_measurement(self, smu_addr, pau_addr, sensor_name):
+    def initialize_measurement(self, smu_visa_resource_name, pau_visa_resource_name, sensor_name):
 
         self.sensor_name = sensor_name
-        self.smu_address = smu_addr
-        self.pau_address = pau_addr
+        self.smu_visa_resouce_name = smu_visa_resource_name
+        self.pau_visa_resouce_name = pau_visa_resource_name
 
         self.measurement_arr.clear()
         self.output_arr.clear()
         self.data_points = -1
         self._make_out_dir()
 
-        self.smu.open(self.smu_address)
+        self.smu.open(self.smu_visa_resouce_name)
         self.smu.initialize()
         self.smu.set_voltage(0)
         self.smu.set_voltage_range(200)
 
-        self.pau.open(self.pau_address)
+        self.pau.open(self.pau_visa_resouce_name)
         self.pau.initialize()
 
-        self.smu.get_idn()
-        self.pau.get_idn()
+        # self.smu.get_idn()
+        # self.pau.get_idn()
         self.resources_closed = False
 
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,

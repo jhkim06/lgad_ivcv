@@ -47,11 +47,11 @@ class CVMeasurementGUI(MeasurementGUI):
             frequency, ac_level, live_plot, return_sweep):
 
         self.resource_map = resource_map
-        id_list = [*self.resource_map.keys()]
-        self.set_combo_box_items(id_list)
+        idn_list = [*self.resource_map.keys()]
+        self.set_combo_box_items(idn_list)
         try:
-            index_lcr = id_list.index(LCR_ID)
-            index_pau = id_list.index(PAU_ID)
+            index_lcr = idn_list.index(LCR_ID)
+            index_pau = idn_list.index(PAU_ID)
             self.combo_box_lcr.setCurrentIndex(index_lcr)
             self.combo_box_pau.setCurrentIndex(index_pau)
         except ValueError as e:
@@ -65,13 +65,13 @@ class CVMeasurementGUI(MeasurementGUI):
         self.set_live_plot(live_plot)
         self.set_return_sweep(return_sweep)
 
-    def get_lcr_addr(self):
-        id_name = self.combo_box_lcr.currentText()
-        return self.resource_map[id_name]
+    def get_lcr_visa_resource_name(self):
+        idn = self.combo_box_lcr.currentText()
+        return self.resource_map[idn]
 
-    def get_pau_addr(self):
-        id_name = self.combo_box_pau.currentText()
-        return self.resource_map[id_name]
+    def get_pau_visa_resource_name(self):
+        idn = self.combo_box_pau.currentText()
+        return self.resource_map[idn]
 
     def get_frequency(self):
         return int(self.line_edit_frequency.text())
@@ -80,8 +80,8 @@ class CVMeasurementGUI(MeasurementGUI):
         return float(self.line_edit_ac_level.text())
 
     def get(self):
-        smu = self.get_lcr_addr()
-        pau = self.get_pau_addr()
+        smu = self.get_lcr_visa_resource_name()
+        pau = self.get_pau_visa_resource_name()
         sensor_name = self.get_sensor_name()
         initial_voltage = self.get_initial_voltage()
         final_voltage = self.get_final_voltage()
@@ -95,8 +95,9 @@ class CVMeasurementGUI(MeasurementGUI):
                 compliance, ac_level, return_sweep, live_plot)
 
     def init_measurement(self):
-        self.measurement.initialize_measurement(pau_addr=self.get_pau_addr(), lcr_addr=self.get_lcr_addr(),
-                                                sensor_name=self.get_sensor_name())
+        self.measurement.initialize_measurement(pau_visa_resource_name=self.get_pau_visa_resource_name(), 
+                lcr_visa_resource_name=self.get_lcr_visa_resource_name(),
+                sensor_name=self.get_sensor_name())
 
     def set_measurement_options(self):
         self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),

@@ -16,14 +16,14 @@ CURRENT_COMPLIANCE = 10e-6
 
 
 class CVMeasurementBackend(MeasurementBackend):
-    def __init__(self, pau_addr=None, lcr_addr=None, sensor_name=None):
+    def __init__(self, pau_visa_resource_name=None, lcr_visa_resource_name=None, sensor_name=None):
         super(CVMeasurementBackend, self).__init__()
         self.pau = Keithley6487()
         self.lcr = WayneKerr4300()
 
         self.sensor_name = sensor_name
-        self.lcr_address = lcr_addr
-        self.pau_address = pau_addr
+        self.lcr_visa_resource_name = lcr_visa_resource_name
+        self.pau_visa_resource_name = pau_visa_resource_name
         self.initial_voltage = 0
         self.final_voltage = -60
         self.initial_voltage_more_points = -40  # -15, -40 (according to gain layer design)
@@ -42,11 +42,11 @@ class CVMeasurementBackend(MeasurementBackend):
         self.out_txt_header = 'Vpau(V)\tC(F)\tR(Ohm)\tIpau(A)'
         self.base_path += r'\C-V_test'
 
-    def initialize_measurement(self, lcr_addr, pau_addr, sensor_name):
+    def initialize_measurement(self, lcr_visa_resource_name, pau_visa_resource_name, sensor_name):
 
         self.sensor_name = sensor_name
-        self.lcr_address = lcr_addr
-        self.pau_address = pau_addr
+        self.lcr_visa_resource_name = lcr_visa_resource_name
+        self.pau_visa_resource_name = pau_visa_resource_name
         self.data_points = -1
 
         self.measurement_arr.clear()
@@ -54,15 +54,15 @@ class CVMeasurementBackend(MeasurementBackend):
 
         self._make_out_dir()
 
-        self.lcr.open(self.lcr_address)
+        self.lcr.open(self.lcr_visa_resource_name)
         self.lcr.initialize()
         self.lcr.set_dc_voltage(0)
 
-        self.pau.open(self.pau_address)
+        self.pau.open(self.pau_visa_resource_name)
         self.pau.initialize_full()
 
-        self.lcr.get_idn()
-        self.pau.get_idn()
+        # self.lcr.get_idn()
+        # self.pau.get_idn()
         self.resources_closed = False
 
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,

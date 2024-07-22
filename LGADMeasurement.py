@@ -72,28 +72,29 @@ class LGADMeasurement(QDialog):
     def _set_connected_resource_map(self):
 
         rm = pyvisa.ResourceManager()
-        rlist = list(rm.list_resources())
-        rlist[:] = [device_name for device_name in rlist if not 'ASRL' in device_name]
+        visa_resource_names = list(rm.list_resources())
+        visa_resource_names[:] = [device_name 
+                for device_name in visa_resource_names if not 'ASRL' in device_name]
 
-        self.map_idn_address = dict()
-        for addr in rlist:
-            inst = rm.open_resource(addr)
-            idn = inst.query("*IDN?")
+        self.device_dict = dict()
+        for visa_resource_name in visa_resource_names:
+            inst = rm.open_resource(visa_resource_name)
+            idn = inst.query("*IDN?")  # identification query
             if idn == '\n':
                 idn = 'LCR meter'
             else:
                 idn = " ".join(idn.split(",")[1:-2])
-            self.map_idn_address[idn] = addr
+            self.device_dict[idn] = visa_resource_name
             inst.close()
 
     def _init_gui_options(self, measurement_type):
 
         if measurement_type == MeasurementType.IV:
-            self.iv_gui.set(self.map_idn_address, "FBK", 0, -250, 1,
+            self.iv_gui.set(self.device_dict, "FBK", 0, -250, 1,
                             1e-5, True, True)
 
         elif measurement_type == MeasurementType.CV:
-            self.cv_gui.set(self.map_idn_address, "FBK", 0, -60, 1,
+            self.cv_gui.set(self.device_dict, "FBK", 0, -60, 1,
                             1000, 0.1, True, True)
         else:
             print("Unknown measurement type")
