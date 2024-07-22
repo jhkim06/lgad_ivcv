@@ -73,9 +73,7 @@ class LGADMeasurement(QDialog):
 
         rm = pyvisa.ResourceManager()
         rlist = list(rm.list_resources())
-        for addr in list(rlist):
-            if 'ASRL' in addr:
-                rlist.remove(addr)
+        rlist[:] = [device_name for device_name in rlist if not 'ASRL' in device_name]
 
         self.map_idn_address = dict()
         for addr in rlist:
