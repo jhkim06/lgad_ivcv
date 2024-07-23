@@ -28,6 +28,7 @@ class IVMeasurementGUI(MeasurementGUI):
         self.line_edit_current_compliance = line_edit_current_compliance
 
         self.measurement = IVMeasurementBackend()
+        self.draw_extra_point = True
 
     def set_combo_box_items(self, items):
         self.combo_box_smu.addItems(items)

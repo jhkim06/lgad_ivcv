@@ -79,13 +79,16 @@ class LGADMeasurement(QDialog):
         self.device_dict = dict()
         for visa_resource_name in visa_resource_names:
             inst = rm.open_resource(visa_resource_name)
+            if ('USB' in visa_resource_name) or ('usb' in visa_resource_name):
+                inst.read_termination = '\n'
+                inst.write_termination = '\n'
+
             idn = inst.query("*IDN?")  # identification query
-            if idn == '\n':
-                idn = 'LCR meter'
-            else:
-                idn = " ".join(idn.split(",")[1:-2])
+            idn = " ".join(idn.split(",")[1:-2]).lstrip()
+            print(idn, "mapped to", "VISA resource name,", visa_resource_name)
             self.device_dict[idn] = visa_resource_name
             inst.close()
+        print(len(self.device_dict), "devices connected")
 
     def _init_gui_options(self, measurement_type):
 

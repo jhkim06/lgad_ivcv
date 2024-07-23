@@ -27,6 +27,7 @@ class MeasurementGUI:
         self.resource_map = None
         self.measurement = None
         self.w = None
+        self.draw_extra_point = False
 
     def set_sensor_name(self, name):
         self.line_edit_sensor_name.setText(name)
@@ -108,7 +109,7 @@ class MeasurementGUI:
             update_thread.start()
 
             if self.get_live_plot():
-                self.w = LivePlotWindow(self.measurement)
+                self.w = LivePlotWindow(self.measurement, self.draw_extra_point)  # add option to draw extra point
             else:
                 pass
         else:

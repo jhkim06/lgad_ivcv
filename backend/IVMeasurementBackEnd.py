@@ -99,7 +99,9 @@ class IVMeasurementBackend(MeasurementBackend):
         # print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
 
         self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
-        self.output_arr.append([voltage, current_pau])
+        # TODO add option
+        self.output_arr.append([voltage, current_pau, current_smu])
+        # self.output_arr.append([voltage, current_smu])
         self.set_status_str(index, is_forced_return)
 
     def _measure(self):
@@ -111,9 +113,9 @@ class IVMeasurementBackend(MeasurementBackend):
                 last_voltage = voltage
                 break
 
-        # start "return sweep" if the measurement stopped
+        # start "return sweep" if the measurement stopped by user or reached the final voltage
         if self.event.is_set():
-            if last_voltage < 0:
+            if last_voltage < 0:  # 
                 self._make_voltage_array(last_voltage, 0, False)
                 for index, voltage in enumerate(self.voltage_array):
                     self._update_measurement_array(voltage, index, True)

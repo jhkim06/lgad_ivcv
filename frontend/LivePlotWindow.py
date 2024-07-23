@@ -6,16 +6,19 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 
 
 class LivePlotWindow(QWidget):
-    def __init__(self, measurement):
+    def __init__(self, measurement, draw_extra_point=False):
         super().__init__()
 
         self.xs = None
         self.ys = None
+        self.ys_extra = None
+        self.draw_extra_point = draw_extra_point
 
         self._measurement = measurement
         self.x_axis_label = measurement.get_x_axis_label()
         self.y_axis_label = measurement.get_y_axis_label()
 
+        self.axis_extra = None
         self._init_draw()  # create sub-plots and call FuncAnimation()
         self._init_ui()
         self.show()
@@ -38,12 +41,18 @@ class LivePlotWindow(QWidget):
         # for PyQt embedding
         self.fig = plt.Figure()
         self.axis = self.fig.add_subplot()
+        if self.draw_extra_point:
+            self.axis_extra = self.axis.twinx()
+            # self.axis_extra.clear()
+            self.axis_extra.set_ylabel("Total " + self.y_axis_label)
+
         self.canvas = FigureCanvas(self.fig)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
         self.axis.clear()
         self.axis.set_ylabel(self.y_axis_label)
         self.axis.set_xlabel(self.x_axis_label)
+
 
         self.ani = animation.FuncAnimation(fig=self.fig,
                                            func=self.animate,
@@ -58,9 +67,12 @@ class LivePlotWindow(QWidget):
             self.close()
         else:
             # expected data type is a list with two values for x and y
+            # for IV length == 3, for CV length == 2
             raw_data = self._measurement.get_data_point()
             self.xs = raw_data[0]
             self.ys = raw_data[1]
+            if len(raw_data) == 3 and self.draw_extra_point:
+                self.ys_extra = raw_data[2]
 
         return self._measurement.is_return_sweep_started()
 
@@ -70,9 +82,16 @@ class LivePlotWindow(QWidget):
         self.axis.grid(True)
         if self.xs is not None and self.ys is not None:
             if return_sweep:
-                self.axis.plot(self.xs, self.ys, marker='o', mfc='none', color='black')
+                self.axis.plot(self.xs, self.ys, marker='o', mfc='none', color='blue')
+
+                if self.ys_extra is not None and self.draw_extra_point:
+                    self.axis_extra.plot(self.xs, self.ys_extra, 'ok', mfc='none', ms=2)
             else:
-                self.axis.plot(self.xs, self.ys, 'ro')
+                self.axis.plot(self.xs, self.ys, 'ro', mfc='none')
+
+                if self.ys_extra is not None and self.draw_extra_point:
+                    self.axis_extra.plot(self.xs, self.ys_extra, 'ok', ms=2)
+
 
     def pause(self):
         # self.ani.event_source.stop()
