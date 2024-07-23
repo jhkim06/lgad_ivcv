@@ -22,7 +22,7 @@ class IVMeasurementBackend(MeasurementBackend):
         self.pau_visa_resouce_name = pau_visa_resource_name
         self.initial_voltage = 0
         self.final_voltage = -250
-        self.voltage_step = 250
+        self.voltage_step = 1  # TODO do not allow too big voltage_step such as 100 V
         self.data_points = -1
         self.pad_number = 1
         self.return_sweep = True
@@ -89,6 +89,23 @@ class IVMeasurementBackend(MeasurementBackend):
         self.n_measurement_points = len(self.voltage_array)
         self.n_data_drawn = 0
 
+    def _make_voltage_array_new(self, initial_voltage, final_voltage, initial_call=True):
+        voltage_step = self.voltage_step
+        if initial_voltage > final_voltage:
+            voltage_step = voltage_step * -1
+
+        self.voltage_array = np.arange(initial_voltage, final_voltage, voltage_step)
+        if self.voltage_array[-1] != final_voltage:
+            self.voltage_array = np.append(self.voltage_array, [final_voltage])
+
+        # append return sweep voltages only for the initial array creation
+        if initial_call and self.return_sweep:
+            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]])
+            self.data_index_to_draw = 0  # index to draw of self.output_arr 
+
+        self.n_measurement_points = len(self.voltage_array)
+        self.n_data_drawn = 0
+
     def _update_measurement_array(self, voltage, index, is_forced_return=False):
         self.smu.set_voltage(voltage)
         voltage_smu, current_smu = self.smu.read().split(',')
@@ -99,7 +116,6 @@ class IVMeasurementBackend(MeasurementBackend):
         # print(voltage, voltage_smu, current_smu, current_pau)  # TODO use verbose level
 
         self.measurement_arr.append([voltage, voltage_smu, current_smu, current_pau])
-        # TODO add option
         self.output_arr.append([voltage, current_pau, current_smu])
         # self.output_arr.append([voltage, current_smu])
         self.set_status_str(index, is_forced_return)
