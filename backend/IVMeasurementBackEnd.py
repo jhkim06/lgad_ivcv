@@ -79,17 +79,6 @@ class IVMeasurementBackend(MeasurementBackend):
         # exit(1)
 
     def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
-        n_measurement_points = abs(int(final_voltage - initial_voltage)) + 1
-        self.voltage_array = np.linspace(initial_voltage, final_voltage, n_measurement_points)
-
-        if initial_call and self.return_sweep:
-            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]])
-            self.data_index_to_draw = 0
-
-        self.n_measurement_points = len(self.voltage_array)
-        self.n_data_drawn = 0
-
-    def _make_voltage_array_new(self, initial_voltage, final_voltage, initial_call=True):
         voltage_step = self.voltage_step
         if initial_voltage > final_voltage:
             voltage_step = voltage_step * -1
@@ -129,7 +118,7 @@ class IVMeasurementBackend(MeasurementBackend):
                 last_voltage = voltage
                 break
 
-        # start "return sweep" if the measurement stopped by user or reached the final voltage
+        # start "forced return sweep" if the measurement stopped by user 
         if self.event.is_set():
             if last_voltage < 0:  # 
                 self._make_voltage_array(last_voltage, 0, False)

@@ -26,9 +26,10 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pau_visa_resource_name = pau_visa_resource_name
         self.initial_voltage = 0
         self.final_voltage = -60
+        # FIXME rename left_end_for_steep_curve, right_end
         self.initial_voltage_more_points = -40  # -15, -40 (according to gain layer design)
         self.final_voltage_more_points = -50  # -25, -50
-        self.voltage_step = 60
+        self.voltage_step = 1 
         self.data_points = -1
         self.ac_level = 0.1
         self.frequency = 1000
@@ -89,59 +90,92 @@ class CVMeasurementBackend(MeasurementBackend):
         print("WARNING: Please make sure the output is turned off!")
         # exit(1)
 
-    def _make_voltage_array(self):
-        n_measurement_points = abs(int(self.final_voltage - self.initial_voltage)) + 1
-        self.voltage_array = np.linspace(self.initial_voltage, self.final_voltage,
-                                         n_measurement_points)
+    def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
+        # left_end_voltage, right_end_voltage
+        # left_end_voltage_fine right_end_voltage_fine
+        voltage_step = self.voltage_step 
+        if initial_voltage > final_voltage:
+            left_end_voltage = final_voltage
+            right_end_voltage = initial_voltage
+            voltage_step = voltage_step * -1
+        else:
+            left_end_voltage = initial_voltage
+            right_end_voltage = final_voltage
 
+        self.voltage_array = np.arange(initial_voltage, final_voltage, voltage_step)
+        if self.voltage_array[-1] != final_voltage:
+            self.voltage_array = np.append(self.voltage_array, [final_voltage])
+
+        # make array for steep curve region using np.union1d(x, y)
+        # assume self.initial_voltage_more_points > self.final_voltage_more_points
         if self.initial_voltage_more_points is not None and self.final_voltage_more_points is not None:
-            if (self.initial_voltage_more_points > self.final_voltage and
-                    self.final_voltage_more_points > self.final_voltage):
-                voltage_arr_low = self.voltage_array[self.voltage_array > self.initial_voltage_more_points]
-                voltage_arr_high = self.voltage_array[self.voltage_array < self.final_voltage_more_points]
-                voltage_arr_medium = np.linspace(self.initial_voltage_more_points, self.final_voltage_more_points,
-                                                 n_measurement_points)
-                self.voltage_array = np.concatenate([voltage_arr_low, voltage_arr_medium, voltage_arr_high])
+            # check if the range for more points inside the original range
+            if left_end_voltage < self.final_voltage_more_points and right_end_voltage > self.initial_voltage_more_points:
+                if voltage_step < 0:
+                    voltage_step_for_steep_curve = np.arange(
+                            self.initial_voltage_more_points, 
+                            self.final_voltage_more_points, 
+                            voltage_step/2.)
+                else:
+                    voltage_step_for_steep_curve = np.arange(
+                            self.final_voltage_more_points, 
+                            self.initial_voltage_more_points, 
+                            voltage_step/2.)
 
-        if self.return_sweep:
-            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]])
+                self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)[::-1]
+
+        if initial_call and self.return_sweep:
+            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]]) 
+            self.data_index_to_draw = 0
 
         self.n_measurement_points = len(self.voltage_array)
-        self.data_index_to_draw = 0
+        self.n_data_drawn = 0
 
+    def _update_measurement_array(self, voltage, index, is_forced_return=False):
+
+        if voltage > 0:
+            print("Warning: positive bias is not allowed. Set DC voltage to 0.")
+            voltage = 0
+        self.pau.set_voltage(voltage)
+        try:
+            current_pau, stat_pau, voltage_pau = self.pau.read().split(',')
+        except Exception as exception:
+            print(type(exception).__name__)
+            sys.exit(0)
+
+        voltage_pau = float(voltage_pau)
+        current_pau = float(current_pau[:-1])
+
+        res = self.lcr.read_lcr()
+        capacitance, resistance = self.lcr.read_lcr().split(',')
+        try:
+            capacitance = float(capacitance)
+            resistance = float(resistance)
+        except Exception as exception:
+            print("error in _measure()", type(exception).__name__)
+
+        # print(voltage_pau, capacitance, resistance, current_pau)
+        self.measurement_arr.append([voltage_pau, capacitance, resistance, current_pau])
+        self.output_arr.append([voltage_pau, capacitance])
+        self.set_status_str(index, is_forced_return)
+
+    # FIXME dupulicate 
     def _measure(self):
         self.measurement_in_progress = True
+        last_voltage = 0
         for index, voltage in enumerate(self.voltage_array):
-            if voltage > 0:
-                print("Warning: positive bias is not allowed. Set DC voltage to 0.")
-                voltage = 0
-            self.pau.set_voltage(voltage)
-            try:
-                current_pau, stat_pau, voltage_pau = self.pau.read().split(',')
-            except Exception as exception:
-                print(type(exception).__name__)
-                sys.exit(0)
-
-            voltage_pau = float(voltage_pau)
-            current_pau = float(current_pau[:-1])
-
-            res = self.lcr.read_lcr()
-            capacitance, resistance = self.lcr.read_lcr().split(',')
-            try:
-                capacitance = float(capacitance)
-                resistance = float(resistance)
-            except Exception as exception:
-                print("error in _measure()", type(exception).__name__)
-                break
-
-            # print(voltage_pau, capacitance, resistance, current_pau)
-            self.measurement_arr.append([voltage_pau, capacitance, resistance, current_pau])
-            self.output_arr.append([voltage_pau, capacitance])
-            self.set_status_str(index)
-
+            self._update_measurement_array(voltage, index)
             if self.event.is_set():
-                self._safe_escaper()
+                last_voltage = voltage
                 break
+
+        # 
+        if self.event.is_set():
+            if last_voltage < 0:
+                self._make_voltage_array(last_voltage, 0, False)
+                for index, voltage in enumerate(self.voltage_array):
+                    self._update_measurement_array(voltage, index, True)
+
         self.measurement_in_progress = False
         self.return_sweep_started = False
 
@@ -149,7 +183,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pau.set_current_limit(CURRENT_COMPLIANCE)
         # signal.signal(signal.SIGINT, self._safe_escaper)
 
-        self._make_voltage_array()
+        self._make_voltage_array(self.initial_voltage, self.final_voltage)
 
         self.pau.set_voltage(0)
         self.pau.set_output('ON')
@@ -166,7 +200,7 @@ class CVMeasurementBackend(MeasurementBackend):
 
     def stop_measurement(self):
         self.event.set()
-        self.measurement_thread.join()
+        # self.measurement_thread.join()
 
     def save_cv_plot(self, out_file_name):
         measurement_arr_trans = np.array(self.measurement_arr).T

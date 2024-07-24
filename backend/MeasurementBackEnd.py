@@ -17,7 +17,7 @@ class MeasurementBackend:
         self.lcr_address = None
         self.initial_voltage = 0
         self.final_voltage = -250
-        self.voltage_step = 250
+        self.voltage_step = 1
         self.data_points = -1
         self.pad_number = 1
         self.return_sweep = True

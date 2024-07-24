@@ -81,17 +81,31 @@ class LivePlotWindow(QWidget):
 
         self.axis.grid(True)
         if self.xs is not None and self.ys is not None:
+
             if return_sweep:
-                self.axis.plot(self.xs, self.ys, marker='o', mfc='none', color='blue')
+                self.axis.plot(self.xs, self.ys, 'ob', mfc='none')
 
                 if self.ys_extra is not None and self.draw_extra_point:
-                    self.axis_extra.plot(self.xs, self.ys_extra, 'ok', mfc='none', ms=2)
+                    self.axis_extra.plot(self.xs, self.ys_extra, 'ok', ms=2, mfc='none')
             else:
-                self.axis.plot(self.xs, self.ys, 'ro', mfc='none')
+                self.axis.plot(self.xs, self.ys, 'or', mfc='none')
 
                 if self.ys_extra is not None and self.draw_extra_point:
                     self.axis_extra.plot(self.xs, self.ys_extra, 'ok', ms=2)
 
+            '''
+            fmt_ys = 'or'
+            fmt_ys_extra = 'ok'
+            kwargs_ys_extra = {'ms':2}
+
+            if return_sweep:
+                fmt_ys = 'ob'
+                kwargs_ys_extra = {'ms':2, 'mfc':'none'}
+
+            self.axis.plot(self.xs, self.ys, fmt_ys, mfc='none')
+            if self.ys_extra is not None and self.draw_extra_point:
+                self.axis_extra.plot(self.xs, self.ys_extra, fmt_ys_extra, **kwargs_ys_extra)
+            '''
 
     def pause(self):
         # self.ani.event_source.stop()

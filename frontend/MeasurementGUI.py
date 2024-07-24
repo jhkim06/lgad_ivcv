@@ -88,6 +88,7 @@ class MeasurementGUI:
     def measure_btn_reset(self):
         current_text = self.button_measure.text()
         if current_text == "Stop Measurement":
+            # TODO diable button until measurement finished
             self.button_measure.setText("Start Measurement")
             self.button_measure.setChecked(False)
 
