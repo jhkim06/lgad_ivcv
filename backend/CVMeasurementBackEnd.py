@@ -122,7 +122,10 @@ class CVMeasurementBackend(MeasurementBackend):
                             self.initial_voltage_more_points, 
                             voltage_step/2.)
 
-                self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)[::-1]
+                if initial_voltage > final_voltage:
+                    self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)[::-1]
+                else:
+                    self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)
 
         if initial_call and self.return_sweep:
             self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]]) 

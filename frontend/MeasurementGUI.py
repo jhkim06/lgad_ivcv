@@ -86,16 +86,13 @@ class MeasurementGUI:
         self.label_status.setText("Measurement DONE, output path: " + self.measurement.get_out_dir())
 
     def measure_btn_reset(self):
-        current_text = self.button_measure.text()
-        if current_text == "Stop Measurement":
-            # TODO diable button until measurement finished
-            self.button_measure.setText("Start Measurement")
-            self.button_measure.setChecked(False)
+        self.button_measure.setEnabled(True)
+        self.button_measure.setText("Start Measurement")
+        self.button_measure.setChecked(False)  # for next click to be isChecked() == True 
 
     def stop_measurement(self):
         self.measurement.stop_measurement()
-        # self.w.close()
-        self.measure_btn_reset()
+        self.button_measure.setEnabled(False)
 
     def control_measurement(self):
         if self.button_measure.isChecked():
@@ -104,15 +101,12 @@ class MeasurementGUI:
 
             self.label_status.setText("Start measurement...")
             self.measurement.start_measurement()
-            self.button_measure.setText("Stop Measurement")
+            self.button_measure.setText("Force return sweep")
 
             update_thread = BaseThread(target=self.update_status_label, callback=self.measure_btn_reset)
             update_thread.start()
 
             if self.get_live_plot():
-                self.w = LivePlotWindow(self.measurement, self.draw_extra_point)  # add option to draw extra point
-            else:
-                pass
+                self.w = LivePlotWindow(self.measurement, self.draw_extra_point)
         else:
             self.stop_measurement()
-            self.button_measure.setText("Start Measurement")
