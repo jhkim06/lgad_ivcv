@@ -78,6 +78,26 @@ class MeasurementBackend:
         else:
             return False
 
+    def _measure(self):
+        self.measurement_in_progress = True
+        last_voltage = 0
+        for index, voltage in enumerate(self.voltage_array):
+            self._update_measurement_array(voltage, index)
+            if self.event.is_set():  # flag in Evnet is set true, when measurement stopped by user
+                last_voltage = voltage
+                break
+
+        # start "forced return sweep" if the measurement stopped by user 
+        if self.event.is_set():
+            if last_voltage < 0:  # 
+                self._make_voltage_array(last_voltage, 0, False)
+                for index, voltage in enumerate(self.voltage_array):
+                    self._update_measurement_array(voltage, index, True)
+
+            # self._safe_escaper()
+        self.measurement_in_progress = False
+        self.return_sweep_started = False
+
     def get_data_point(self):
         if self.is_data_exists():
             if self.data_index_to_draw < len(self.output_arr):

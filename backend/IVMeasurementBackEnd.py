@@ -109,26 +109,6 @@ class IVMeasurementBackend(MeasurementBackend):
         # self.output_arr.append([voltage, current_smu])
         self.set_status_str(index, is_forced_return)
 
-    def _measure(self):
-        self.measurement_in_progress = True
-        last_voltage = 0
-        for index, voltage in enumerate(self.voltage_array):
-            self._update_measurement_array(voltage, index)
-            if self.event.is_set():  # flag in Evnet is set true, when measurement stopped by user
-                last_voltage = voltage
-                break
-
-        # start "forced return sweep" if the measurement stopped by user 
-        if self.event.is_set():
-            if last_voltage < 0:  # 
-                self._make_voltage_array(last_voltage, 0, False)
-                for index, voltage in enumerate(self.voltage_array):
-                    self._update_measurement_array(voltage, index, True)
-
-            # self._safe_escaper()
-        self.measurement_in_progress = False
-        self.return_sweep_started = False
-
     def start_measurement(self):
         self.smu.set_current_limit(self.current_compliance)
         # signal.signal(signal.SIGINT, self._safe_escaper)

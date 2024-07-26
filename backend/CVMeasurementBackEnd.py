@@ -107,9 +107,9 @@ class CVMeasurementBackend(MeasurementBackend):
             self.voltage_array = np.append(self.voltage_array, [final_voltage])
 
         # make array for steep curve region using np.union1d(x, y)
-        # assume self.initial_voltage_more_points > self.final_voltage_more_points
+        # assume always self.initial_voltage_more_points > self.final_voltage_more_points
         if self.initial_voltage_more_points is not None and self.final_voltage_more_points is not None:
-            # check if the range for more points inside the original range
+            # check if the range for more points is inside the original range
             if left_end_voltage < self.final_voltage_more_points and right_end_voltage > self.initial_voltage_more_points:
                 if voltage_step < 0:
                     voltage_step_for_steep_curve = np.arange(
@@ -161,26 +161,6 @@ class CVMeasurementBackend(MeasurementBackend):
         self.measurement_arr.append([voltage_pau, capacitance, resistance, current_pau])
         self.output_arr.append([voltage_pau, capacitance])
         self.set_status_str(index, is_forced_return)
-
-    # FIXME dupulicate 
-    def _measure(self):
-        self.measurement_in_progress = True
-        last_voltage = 0
-        for index, voltage in enumerate(self.voltage_array):
-            self._update_measurement_array(voltage, index)
-            if self.event.is_set():
-                last_voltage = voltage
-                break
-
-        # 
-        if self.event.is_set():
-            if last_voltage < 0:
-                self._make_voltage_array(last_voltage, 0, False)
-                for index, voltage in enumerate(self.voltage_array):
-                    self._update_measurement_array(voltage, index, True)
-
-        self.measurement_in_progress = False
-        self.return_sweep_started = False
 
     def start_measurement(self):
         self.pau.set_current_limit(CURRENT_COMPLIANCE)

@@ -125,23 +125,27 @@ class Plotter:
         self.current_axis.add_artist(at)
         # hep.mpl_magic(self.current_axis)
 
-    def draw(self, x_index=0, y_index=1, remove_offset=False, flip_x=False, flip_y=False,
-             draw_half=False, draw_second_half=False):
+    def draw(self, x_index=0, y_index=1, remove_offset=False, flip_x=False, flip_y=False):
         for data_index, this_data in enumerate(self.data):
             x = this_data.T[x_index]
             y = this_data.T[y_index]
+
             if remove_offset:
                 y = y - y[0]
             if flip_x:
                 x = -1. * x
             if flip_y:
                 y = -1. * y
-            if draw_half:
+
+            if "draw_half" in self.data_kwargs[data_index]:
                 x = x[:len(x)//2]
                 y = y[:len(y)//2]
-            if draw_second_half:
+                self.data_kwargs[data_index].pop("draw_half")
+            if "draw_second_half" in self.data_kwargs[data_index]:
                 x = x[len(x)//2:]
                 y = y[len(y)//2:]
+                self.data_kwargs[data_index].pop("draw_second_half")
+
             row, col =self.data_loc[data_index]
             self.set_current_axis((row, col))
             self.current_axis.errorbar(x, y,
