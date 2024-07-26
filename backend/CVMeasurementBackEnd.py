@@ -104,6 +104,17 @@ class CVMeasurementBackend(MeasurementBackend):
         if self.voltage_array[-1] != final_voltage:
             self.voltage_array = np.append(self.voltage_array, [final_voltage])
 
+        self._add_voltage_array_for_steep_curve(right_end_voltage, left_end_voltage)
+
+        if initial_call and self.return_sweep:
+            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]]) 
+            self.data_index_to_draw = 0
+
+        self.n_measurement_points = len(self.voltage_array)
+        self.n_data_drawn = 0
+
+    def _add_voltage_array_for_steep_curve(right_end_voltage, left_end_voltage):
+        
         # make array for steep curve region using np.union1d(x, y)
         if self.right_end_voltage_for_steep_curve is not None and self.left_end_voltage_for_steep_curve is not None:
             # check if the range for steep region is inside the original range
@@ -117,13 +128,6 @@ class CVMeasurementBackend(MeasurementBackend):
                     self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)[::-1]
                 else:
                     self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)
-
-        if initial_call and self.return_sweep:
-            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]]) 
-            self.data_index_to_draw = 0
-
-        self.n_measurement_points = len(self.voltage_array)
-        self.n_data_drawn = 0
 
     def _update_measurement_array(self, voltage, index, is_forced_return=False):
 
