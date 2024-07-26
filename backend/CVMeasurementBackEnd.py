@@ -27,8 +27,8 @@ class CVMeasurementBackend(MeasurementBackend):
         self.initial_voltage = 0
         self.final_voltage = -60
         # FIXME rename left_end_for_steep_curve, right_end
-        self.initial_voltage_more_points = -40  # -15, -40 (according to gain layer design)
-        self.final_voltage_more_points = -50  # -25, -50
+        self.right_end_voltage_for_steep_curve = -40  # -15, -40 (according to gain layer design)
+        self.left_end_voltage_for_steep_curve = -50  # -25, -50
         self.voltage_step = 1 
         self.data_points = -1
         self.ac_level = 0.1
@@ -107,19 +107,19 @@ class CVMeasurementBackend(MeasurementBackend):
             self.voltage_array = np.append(self.voltage_array, [final_voltage])
 
         # make array for steep curve region using np.union1d(x, y)
-        # assume always self.initial_voltage_more_points > self.final_voltage_more_points
-        if self.initial_voltage_more_points is not None and self.final_voltage_more_points is not None:
+        # assume always self.right_end_voltage_for_steep_curve > self.left_end_voltage_for_steep_curve
+        if self.right_end_voltage_for_steep_curve is not None and self.left_end_voltage_for_steep_curve is not None:
             # check if the range for more points is inside the original range
-            if left_end_voltage < self.final_voltage_more_points and right_end_voltage > self.initial_voltage_more_points:
+            if left_end_voltage < self.left_end_voltage_for_steep_curve and right_end_voltage > self.right_end_voltage_for_steep_curve:
                 if voltage_step < 0:
                     voltage_step_for_steep_curve = np.arange(
-                            self.initial_voltage_more_points, 
-                            self.final_voltage_more_points, 
+                            self.right_end_voltage_for_steep_curve, 
+                            self.left_end_voltage_for_steep_curve, 
                             voltage_step/2.)
                 else:
                     voltage_step_for_steep_curve = np.arange(
-                            self.final_voltage_more_points, 
-                            self.initial_voltage_more_points, 
+                            self.left_end_voltage_for_steep_curve, 
+                            self.right_end_voltage_for_steep_curve, 
                             voltage_step/2.)
 
                 if initial_voltage > final_voltage:
@@ -218,11 +218,11 @@ class CVMeasurementBackend(MeasurementBackend):
     def save_results(self):
         if self.resources_closed is False:
             # TODO use verbose level
-            if (self.initial_voltage_more_points is not None) and (self.final_voltage_more_points is not None):
+            if (self.right_end_voltage_for_steep_curve is not None) and (self.left_end_voltage_for_steep_curve is not None):
                 print(f"   * Bias sweep of {self.n_measurement_points} meas between {self.initial_voltage} "
                       f"and {self.final_voltage} "
                       f"with {self.n_measurement_points} meas "
-                      f"between {self.initial_voltage_more_points} and {self.final_voltage_more_points}")
+                      f"between {self.right_end_voltage_for_steep_curve} and {self.left_end_voltage_for_steep_curve}")
             else:
                 print(f"   * Bias sweep of {self.n_measurement_points} meas "
                       f"between {self.initial_voltage} and {self.final_voltage} ")
