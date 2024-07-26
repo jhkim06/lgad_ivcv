@@ -26,7 +26,6 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pau_visa_resource_name = pau_visa_resource_name
         self.initial_voltage = 0
         self.final_voltage = -60
-        # FIXME rename left_end_for_steep_curve, right_end
         self.right_end_voltage_for_steep_curve = -40  # -15, -40 (according to gain layer design)
         self.left_end_voltage_for_steep_curve = -50  # -25, -50
         self.voltage_step = 1 
@@ -92,7 +91,6 @@ class CVMeasurementBackend(MeasurementBackend):
 
     def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
         # left_end_voltage, right_end_voltage
-        # left_end_voltage_fine right_end_voltage_fine
         voltage_step = self.voltage_step 
         if initial_voltage > final_voltage:
             left_end_voltage = final_voltage
@@ -107,22 +105,15 @@ class CVMeasurementBackend(MeasurementBackend):
             self.voltage_array = np.append(self.voltage_array, [final_voltage])
 
         # make array for steep curve region using np.union1d(x, y)
-        # assume always self.right_end_voltage_for_steep_curve > self.left_end_voltage_for_steep_curve
         if self.right_end_voltage_for_steep_curve is not None and self.left_end_voltage_for_steep_curve is not None:
-            # check if the range for more points is inside the original range
+            # check if the range for steep region is inside the original range
             if left_end_voltage < self.left_end_voltage_for_steep_curve and right_end_voltage > self.right_end_voltage_for_steep_curve:
-                if voltage_step < 0:
-                    voltage_step_for_steep_curve = np.arange(
-                            self.right_end_voltage_for_steep_curve, 
-                            self.left_end_voltage_for_steep_curve, 
-                            voltage_step/2.)
-                else:
-                    voltage_step_for_steep_curve = np.arange(
-                            self.left_end_voltage_for_steep_curve, 
-                            self.right_end_voltage_for_steep_curve, 
-                            voltage_step/2.)
+                voltage_step_for_steep_curve = np.arange(
+                        self.left_end_voltage_for_steep_curve, 
+                        self.right_end_voltage_for_steep_curve, 
+                        self.voltage_step/2.)
 
-                if initial_voltage > final_voltage:
+                if voltage_step < 0:  # if initial_voltage > final_voltage
                     self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)[::-1]
                 else:
                     self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)
