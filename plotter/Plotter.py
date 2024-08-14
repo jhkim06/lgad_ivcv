@@ -3,9 +3,7 @@ import mplhep as hep
 import numpy as np
 from matplotlib.offsetbox import AnchoredText
 from typing import List, Dict, Any
-
-prop_cycle = plt.rcParams['axes.prop_cycle']
-colors = prop_cycle.by_key()['color']
+import matplotlib as mpl
 
 
 class Plotter:
@@ -33,9 +31,9 @@ class Plotter:
 
         # make directory to save plots
         self.base_output_dir = base_output_dir
-        self.out_dir = ''
 
     def get_n_colors(self, n):
+        colors = mpl.cm.tab20(range(n))
         color_list = [color for color in colors]
         return color_list
 
@@ -125,17 +123,36 @@ class Plotter:
         self.current_axis.add_artist(at)
         # hep.mpl_magic(self.current_axis)
 
-    def draw(self, x_index=0, y_index=1, remove_offset=False, flip_x=False, flip_y=False):
+    def draw(self, x_index=0, y_index=1, remove_offset=False, flip_x=False):
         for data_index, this_data in enumerate(self.data):
+
+            if "x_index" in self.data_kwargs[data_index]:
+                x_index = self.data_kwargs[data_index]["x_index"]
+                self.data_kwargs[data_index].pop("x_index")
+            if "y_index" in self.data_kwargs[data_index]:
+                y_index = self.data_kwargs[data_index]["y_index"]
+                self.data_kwargs[data_index].pop("y_index")
             x = this_data.T[x_index]
             y = this_data.T[y_index]
+
+            if "ratio" in self.data_kwargs[data_index]:
+                denominator_index = self.data_kwargs[data_index]["ratio"][0]
+                nominator_index = self.data_kwargs[data_index]["ratio"][1]
+                y = this_data.T[nominator_index]/this_data.T[denominator_index]
+                self.data_kwargs[data_index].pop("ratio")
+
+            if "y_scale" in self.data_kwargs[data_index]:
+                y = y * self.data_kwargs[data_index]["y_scale"]
+                self.data_kwargs[data_index].pop("y_scale")
 
             if remove_offset:
                 y = y - y[0]
             if flip_x:
                 x = -1. * x
-            if flip_y:
-                y = -1. * y
+            if "flip_y" in self.data_kwargs[data_index]:
+                if self.data_kwargs[data_index]["flip_y"]:
+                    y = -1. * y
+                    self.data_kwargs[data_index].pop("flip_y")
 
             if "draw_half" in self.data_kwargs[data_index]:
                 x = x[:len(x)//2]
@@ -146,7 +163,7 @@ class Plotter:
                 y = y[len(y)//2:]
                 self.data_kwargs[data_index].pop("draw_second_half")
 
-            row, col =self.data_loc[data_index]
+            row, col = self.data_loc[data_index]
             self.set_current_axis((row, col))
             self.current_axis.errorbar(x, y,
                                        **self.data_kwargs[data_index], )
@@ -157,18 +174,18 @@ class Plotter:
         # self.current_axis.set_yscale("log")
         # hep.plot.mpl_magic(self.current_axis)
 
-    def show_legend(self, loc='best'):
+    def show_legend(self, loc='best', **kwargs):
 
         # loop over axes
         for row in range(self.rows):
             for col in range(self.cols):
                 self.set_current_axis((row, col))
-                hep.plot.hist_legend(self.current_axis, loc=loc, fontsize=15)
+                hep.plot.hist_legend(self.current_axis, loc=loc, fontsize=15, **kwargs)
 
     def save_fig(self, out_name=''):
         out_file_name = out_name
 
         print(f"save plot... {out_file_name}")
-        self.fig.savefig(self.out_dir + out_file_name + ".pdf")
+        self.fig.savefig(self.base_output_dir + out_file_name + ".pdf")
         # self.reset()
         plt.close()

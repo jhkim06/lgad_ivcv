@@ -92,6 +92,7 @@ class CVMeasurementBackend(MeasurementBackend):
     def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
         # left_end_voltage, right_end_voltage
         voltage_step = self.voltage_step 
+        decreasing_order = True
         if initial_voltage > final_voltage:
             left_end_voltage = final_voltage
             right_end_voltage = initial_voltage
@@ -99,12 +100,13 @@ class CVMeasurementBackend(MeasurementBackend):
         else:
             left_end_voltage = initial_voltage
             right_end_voltage = final_voltage
+            decreasing_order = False
 
         self.voltage_array = np.arange(initial_voltage, final_voltage, voltage_step)
         if self.voltage_array[-1] != final_voltage:
             self.voltage_array = np.append(self.voltage_array, [final_voltage])
 
-        self._add_voltage_array_for_steep_curve(right_end_voltage, left_end_voltage)
+        self._add_voltage_array_for_steep_curve(right_end_voltage, left_end_voltage, decreasing_order)
 
         if initial_call and self.return_sweep:
             self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]]) 
@@ -113,7 +115,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.n_measurement_points = len(self.voltage_array)
         self.n_data_drawn = 0
 
-    def _add_voltage_array_for_steep_curve(right_end_voltage, left_end_voltage):
+    def _add_voltage_array_for_steep_curve(self, right_end_voltage, left_end_voltage, decreasing_order=True):
         
         # make array for steep curve region using np.union1d(x, y)
         if self.right_end_voltage_for_steep_curve is not None and self.left_end_voltage_for_steep_curve is not None:
@@ -124,9 +126,11 @@ class CVMeasurementBackend(MeasurementBackend):
                         self.right_end_voltage_for_steep_curve, 
                         self.voltage_step/2.)
 
-                if voltage_step < 0:  # if initial_voltage > final_voltage
+                if decreasing_order: 
+                    # arrange decreading order
                     self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)[::-1]
                 else:
+                    # arrange increasing order
                     self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)
 
     def _update_measurement_array(self, voltage, index, is_forced_return=False):
@@ -230,10 +234,13 @@ class CVMeasurementBackend(MeasurementBackend):
             self.lcr.close()
             self.resources_closed = True
 
-            file_name = (f'CV_LCR+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}_'
-                         f'{self.frequency}Hz_pad{self.pad_number}')
-            out_file_name = os.path.join(self.out_dir_path, file_name)
-            out_file_name = make_unique_name(out_file_name)
+            # file_name = (f'CV_LCR+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}_'
+            #              f'{self.frequency}Hz_pad{self.pad_number}')
+            # out_file_name = os.path.join(self.out_dir_path, file_name)
+            # out_file_name = make_unique_name(out_file_name)
+
+            file_name = self.make_out_file_name()
+            out_file_name = self.get_unique_file_path(file_name)
 
             np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)
             self.save_cv_plot(out_file_name + '.png')

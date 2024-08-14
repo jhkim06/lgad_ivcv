@@ -15,7 +15,6 @@ def mkdir(path):
             os.mkdir(ptmp)
         except: 
             pass
-    
     return
 
 
@@ -25,7 +24,7 @@ def getdate():
 
 
 def make_unique_name(file_name):
-    uniq = 1
+    uniq = 0
     while os.path.exists(file_name + '.txt'):
         uniq += 1
         file_name = f'{file_name}_{uniq}'
