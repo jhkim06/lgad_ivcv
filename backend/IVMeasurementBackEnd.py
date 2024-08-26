@@ -134,12 +134,7 @@ class IVMeasurementBackend(MeasurementBackend):
             self.pau.close()
             self.resources_closed = True
 
-            # file_name = (f'IV_SMU+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}'
-            #              f'_pad{self.pad_number}')
-            # parse sensor_name make_file_name()
             file_name = self.make_out_file_name()
-            # out_file_name = os.path.join(self.out_dir_path, file_name)
-            # out_file_name = make_unique_name(out_file_name)
             out_file_name = self.get_unique_file_path(file_name)
 
             np.savetxt(out_file_name + '.txt', self.measurement_arr, header=self.out_txt_header)

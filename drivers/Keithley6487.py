@@ -52,6 +52,7 @@ class Keithley6487(GPIBBase):
         self.write("FUNC 'curr'")  # just to be sure
         self.write("INIT")  # TODO check without this line
         self.write("CURR:RANG:AUTO ON")
+        # self.write("CURR:RANG 2e-6")  # for probecard test
         self.write("SYST:ZCH OFF")
 
     def get_current_range(self):

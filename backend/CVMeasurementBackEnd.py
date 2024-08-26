@@ -68,8 +68,9 @@ class CVMeasurementBackend(MeasurementBackend):
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,
                                 ac_level, frequency, return_sweep, pad_number, live_plot):
 
-        self.initial_voltage = initial_voltage
+        self.initial_voltage = initial_voltage  # TODO initial_voltage;left_end_voltage_for_steep_curve
         self.final_voltage = final_voltage
+
         self.voltage_step = voltage_step
         self.ac_level = ac_level
         self.frequency = frequency
@@ -233,11 +234,6 @@ class CVMeasurementBackend(MeasurementBackend):
             self.lcr.set_dc_voltage(0)
             self.lcr.close()
             self.resources_closed = True
-
-            # file_name = (f'CV_LCR+PAU_{self.sensor_name}_{self.date}_{self.initial_voltage}_{self.final_voltage}_'
-            #              f'{self.frequency}Hz_pad{self.pad_number}')
-            # out_file_name = os.path.join(self.out_dir_path, file_name)
-            # out_file_name = make_unique_name(out_file_name)
 
             file_name = self.make_out_file_name()
             out_file_name = self.get_unique_file_path(file_name)
