@@ -44,7 +44,7 @@ class LGADMeasurement(QDialog):
         # initialize GUI for each experiment
         self.iv_gui = IVMeasurementGUI(self.ui.comboBoxSMU, self.ui.comboBoxPAU,
                                        self.ui.lineEditSensorName,
-                                       self.ui.comboBoxPadNumber_IV,
+                                       self.ui.comboBoxColNumber_IV,
                                        self.ui.lineEditInitialVoltage, self.ui.lineEditFinalVoltage,
                                        self.ui.lineEditVoltageStep, self.ui.lineEditCurrentCompliance,
                                        self.ui.checkBoxReturnSweep, self.ui.checkBoxLivePlot,
@@ -52,7 +52,7 @@ class LGADMeasurement(QDialog):
 
         self.cv_gui = CVMeasurementGUI(self.ui.comboBoxLCR, self.ui.comboBoxPAU_CV,
                                        self.ui.lineEditSensorName_CV,
-                                       self.ui.comboBoxPadNumber_CV,
+                                       self.ui.comboBoxColNumber_CV,
                                        self.ui.lineEditInitialVoltage_CV, self.ui.lineEditFinalVoltage_CV,
                                        self.ui.lineEditVoltageStep_CV, self.ui.lineEditFrequency_CV,
                                        self.ui.lineEditLevAC,
