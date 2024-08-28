@@ -32,6 +32,30 @@ class MeasurementGUI:
         self.w = None
         self.draw_extra_point = False
 
+    def set_common(self, sensor_name, initial_voltage, final_voltage, voltage_step,
+                   live_plot, return_sweep):
+
+        self.set_sensor_name(sensor_name)
+        self.set_initial_voltage(initial_voltage)
+        self.set_final_voltage(final_voltage)
+        self.set_voltage_step(voltage_step)
+        self.set_live_plot(live_plot)
+        self.set_return_sweep(return_sweep)
+
+    def set_combo_box_items(self, combo_box1, combo_box2, id1, id2):
+
+        items = [*self.resource_map.keys()]
+        combo_box1.addItems(items)
+        combo_box2.addItems(items)
+
+        try:
+            index1 = items.index(id1)
+            index2 = items.index(id2)
+            combo_box1.setCurrentIndex(index1)
+            combo_box2.setCurrentIndex(index2)
+        except ValueError as e:
+            print("Check", e)
+
     def set_sensor_name(self, name):
         self.line_edit_sensor_name.setText(name)
 

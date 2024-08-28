@@ -32,10 +32,6 @@ class IVMeasurementGUI(MeasurementGUI):
         self.measurement = IVMeasurementBackend()
         self.draw_extra_point = True
 
-    def set_combo_box_items(self, items):
-        self.combo_box_smu.addItems(items)
-        self.combo_box_pau.addItems(items)
-
     def set_current_compliance(self, current):
         self.line_edit_current_compliance.setText(str(current))
 
@@ -43,23 +39,12 @@ class IVMeasurementGUI(MeasurementGUI):
             current_compliance, live_plot, return_sweep):
 
         self.resource_map = resource_map
-        idn_list = [*self.resource_map.keys()]
-        self.set_combo_box_items(idn_list)
-        try:
-            index_smu = idn_list.index(SMU_ID)
-            index_pau = idn_list.index(PAU_ID)
-            self.combo_box_smu.setCurrentIndex(index_smu)
-            self.combo_box_pau.setCurrentIndex(index_pau)
-        except ValueError as e:
-            print("Check", e)
+        self.set_combo_box_items(self.combo_box_smu, self.combo_box_pau,
+                                 SMU_ID, PAU_ID)
 
-        self.set_sensor_name(sensor_name)
-        self.set_initial_voltage(initial_voltage)
-        self.set_final_voltage(final_voltage)
-        self.set_voltage_step(voltage_step)
+        self.set_common(sensor_name, initial_voltage, final_voltage, voltage_step,
+                        live_plot, return_sweep)
         self.set_current_compliance(current_compliance)
-        self.set_live_plot(live_plot)
-        self.set_return_sweep(return_sweep)
 
     def get_smu_visa_resource_name(self):
         idn = self.combo_box_smu.currentText()

@@ -35,10 +35,6 @@ class CVMeasurementGUI(MeasurementGUI):
 
         self.measurement = CVMeasurementBackend()
 
-    def set_combo_box_items(self, items):
-        self.combo_box_lcr.addItems(items)
-        self.combo_box_pau.addItems(items)
-
     def set_frequency(self, current):
         self.line_edit_frequency.setText(str(current))
 
@@ -47,25 +43,14 @@ class CVMeasurementGUI(MeasurementGUI):
 
     def set(self, resource_map, sensor_name, initial_voltage, final_voltage, voltage_step,
             frequency, ac_level, live_plot, return_sweep):
-
         self.resource_map = resource_map
-        idn_list = [*self.resource_map.keys()]
-        self.set_combo_box_items(idn_list)
-        try:
-            index_lcr = idn_list.index(LCR_ID)
-            index_pau = idn_list.index(PAU_ID)
-            self.combo_box_lcr.setCurrentIndex(index_lcr)
-            self.combo_box_pau.setCurrentIndex(index_pau)
-        except ValueError as e:
-            print("Check", e)
-        self.set_sensor_name(sensor_name)
-        self.set_initial_voltage(initial_voltage)
-        self.set_final_voltage(final_voltage)
-        self.set_voltage_step(voltage_step)
+        self.set_combo_box_items(self.combo_box_lcr, self.combo_box_pau,
+                                 LCR_ID, PAU_ID)
+        self.set_common(sensor_name, initial_voltage, final_voltage, voltage_step,
+                        live_plot, return_sweep)
+
         self.set_frequency(frequency)
         self.set_ac_level(ac_level)
-        self.set_live_plot(live_plot)
-        self.set_return_sweep(return_sweep)
 
     def get_lcr_visa_resource_name(self):
         idn = self.combo_box_lcr.currentText()
