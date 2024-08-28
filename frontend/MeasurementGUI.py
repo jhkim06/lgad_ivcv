@@ -2,8 +2,13 @@ import time
 from frontend.LivePlotWindow import LivePlotWindow
 from util import BaseThread
 
+SMU_ID = "MODEL 2410"
+PAU_ID = "MODEL 6487"
+LCR_ID = "43100"
+
 
 class MeasurementGUI:
+
     def __init__(self, line_edit_sensor_name, combo_box_col_num, combo_box_row_num,
                  line_edit_initial_voltage, line_edit_final_voltage,
                  line_edit_voltage_step, check_box_return_sweep, check_box_live_plot,

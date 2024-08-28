@@ -1,9 +1,6 @@
 from backend.CVMeasurementBackEnd import CVMeasurementBackend
 from frontend.MeasurementGUI import MeasurementGUI
-
-# FIXME use first time setup to set ID for devices
-LCR_ID = "43100"
-PAU_ID = "MODEL 6487"
+from frontend.MeasurementGUI import LCR_ID, PAU_ID
 
 
 class CVMeasurementGUI(MeasurementGUI):

@@ -1,9 +1,6 @@
 from backend.IVMeasurementBackEnd import IVMeasurementBackend
 from frontend.MeasurementGUI import MeasurementGUI
-
-# FIXME use first time setup to set ID for devices
-SMU_ID = "MODEL 2410"
-PAU_ID = "MODEL 6487"
+from frontend.MeasurementGUI import SMU_ID, PAU_ID
 
 
 class IVMeasurementGUI(MeasurementGUI):
