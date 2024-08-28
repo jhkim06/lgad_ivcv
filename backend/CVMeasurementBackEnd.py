@@ -32,7 +32,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.data_points = -1
         self.ac_level = 0.1
         self.frequency = 1000
-        self.pad_number = 1
+        self.col_number = 1
         self.return_sweep = True
         self.live_plot = True
 
@@ -66,7 +66,7 @@ class CVMeasurementBackend(MeasurementBackend):
         self.resources_closed = False
 
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,
-                                ac_level, frequency, return_sweep, pad_number, live_plot):
+                                ac_level, frequency, return_sweep, col_number, row_number, live_plot):
 
         self.initial_voltage = initial_voltage  # TODO initial_voltage;left_end_voltage_for_steep_curve
         self.final_voltage = final_voltage
@@ -76,7 +76,8 @@ class CVMeasurementBackend(MeasurementBackend):
         self.frequency = frequency
         self.return_sweep = return_sweep
         self.live_plot = live_plot
-        self.pad_number = pad_number
+        self.col_number = col_number
+        self.row_number = row_number
 
     def _safe_escaper(self):
         print("User interrupt... Turning off the output ...")

@@ -20,7 +20,8 @@ class MeasurementBackend:
         self.final_voltage = -250
         self.voltage_step = 1
         self.data_points = -1
-        self.pad_number = 1
+        self.col_number = 1
+        self.row_number = 1
         self.return_sweep = True
         self.live_plot = True
         self.resources_closed = True
@@ -63,10 +64,10 @@ class MeasurementBackend:
         if separator in self.sensor_name:
             sensor_name, descr = self.sensor_name.split(separator, 1)
             file_name = (f'IV_SMU+PAU_{sensor_name}_{descr}_{self.date}'
-                         f'_pad{self.pad_number}')
+                         f'_col{self.col_number}_row{self.row_number}')
         else:
             file_name = (f'IV_SMU+PAU_{self.sensor_name}_{self.date}'
-                         f'_pad{self.pad_number}')
+                         f'_col{self.col_number}_row{self.row_number}')
         return file_name
 
     def get_unique_file_path(self, file_name, extension='.txt'):
@@ -115,6 +116,13 @@ class MeasurementBackend:
             return True
         else:
             return False
+
+    def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
+        pass
+
+    def _update_measurement_array(self, voltage, index, is_forced_return=False):
+        # defined in each measurement
+        pass
 
     def _measure(self):
         self.measurement_in_progress = True

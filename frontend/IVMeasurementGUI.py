@@ -9,12 +9,14 @@ PAU_ID = "MODEL 6487"
 class IVMeasurementGUI(MeasurementGUI):
 
     def __init__(self, combo_box_smu, combo_box_pau,
-                 line_edit_sensor_name, combo_box_pad_num,  line_edit_initial_voltage, line_edit_final_voltage,
+                 line_edit_sensor_name, combo_box_col_num, combo_box_row_num,
+                 line_edit_initial_voltage, line_edit_final_voltage,
                  line_edit_voltage_step, line_edit_current_compliance,
                  check_box_return_sweep, check_box_live_plot,
                  button_measure, label_status):
 
-        super().__init__(line_edit_sensor_name, combo_box_pad_num, line_edit_initial_voltage, line_edit_final_voltage,
+        super().__init__(line_edit_sensor_name, combo_box_col_num, combo_box_row_num,
+                         line_edit_initial_voltage, line_edit_final_voltage,
                          line_edit_voltage_step, check_box_return_sweep, check_box_live_plot,
                          button_measure, label_status)
 
@@ -89,12 +91,13 @@ class IVMeasurementGUI(MeasurementGUI):
 
     def init_measurement(self):
         self.measurement.initialize_measurement(smu_visa_resource_name=self.get_smu_visa_resource_name(), 
-                pau_visa_resource_name=self.get_pau_visa_resource_name(),
-                sensor_name=self.get_sensor_name())
+                                                pau_visa_resource_name=self.get_pau_visa_resource_name(),
+                                                sensor_name=self.get_sensor_name())
 
     def set_measurement_options(self):
         self.measurement.set_measurement_options(initial_voltage=0, final_voltage=self.get_final_voltage(),
                                                  voltage_step=self.get_voltage_step(),
                                                  current_compliance=self.get_current_compliance(),
                                                  return_sweep=self.get_return_sweep(),
-                                                 pad_number=self.get_pad_number(), live_plot=self.get_live_plot())
+                                                 col_number=self.get_col_number(), row_number=self.get_row_number(),
+                                                 live_plot=self.get_live_plot())
