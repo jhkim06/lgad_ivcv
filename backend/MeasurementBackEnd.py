@@ -1,6 +1,6 @@
 import os
 import re
-from util import mkdir, getdate
+from util import mkdir, getdate, round_to_significant_figures
 import matplotlib.pyplot as plt
 import numpy as np
 from threading import Event
@@ -19,6 +19,7 @@ class MeasurementBackend:
         self.initial_voltage = 0
         self.final_voltage = -250
         self.voltage_step = 1
+        self.ranges_with_steps = []
         self.data_points = -1
         self.col_number = 1
         self.row_number = 1
@@ -117,8 +118,76 @@ class MeasurementBackend:
         else:
             return False
 
+    def _reorder_ranges_with_steps(self, step_sign):
+        normalized_ranges = []
+        for start, end, step in self.ranges_with_steps:
+            if start > 0 or end > 0:
+                continue  # positive voltage is not allowed, so just ignore
+            if step_sign < 0:
+                step = -abs(step)
+                if start < end:
+                    start, end = end, start
+            else:
+                step = abs(step)
+                if start > end:
+                    start, end = end, start
+            normalized_ranges.append((start, end, step))
+
+        reverse = False
+        if step_sign < 0:
+            reverse = True
+        normalized_ranges = sorted(normalized_ranges, key=lambda x: x[0], reverse=reverse)
+        return normalized_ranges
+
+    def _generate_series(self, initial_value, final_value):
+        series = []
+        current_value = initial_value
+
+        # Determine the sign of the step based on the initial and final values
+        step_sign = 1 if final_value > initial_value else -1
+        default_step = abs(self.voltage_step) * step_sign
+
+        # Normalize the ranges so that they work correctly regardless of order
+        normalized_ranges = self._reorder_ranges_with_steps(step_sign)
+
+        for start, end, step in normalized_ranges:
+            # Add numbers using the default step until the specific range starts
+            if (step_sign > 0 and current_value < start) or (step_sign < 0 and current_value > start):
+                generated_values = np.arange(current_value, start, default_step)
+                series.extend([round_to_significant_figures(x, 4) for x in generated_values])
+                current_value = start
+
+            # Add numbers using the specific step within the given range
+            if ((step_sign > 0 and current_value >= start and current_value < end) or
+                    (step_sign < 0 and current_value <= start and current_value > end)):
+                    
+                generated_values = np.arange(current_value, end, step)
+                series.extend([round_to_significant_figures(x, 4) for x in generated_values])
+                current_value = end
+
+        # Add remaining numbers using the default step
+        if (step_sign > 0 and current_value < final_value) or (step_sign < 0 and current_value > final_value):
+            generated_values = np.arange(current_value, final_value, default_step)
+            series.extend([round_to_significant_figures(x, 4) for x in generated_values])
+
+        # Ensure the final value is included in the series if needed
+        if series and ((step_sign > 0 and series[-1] < final_value) or (step_sign < 0 and series[-1] > final_value)):
+            series.append(round_to_significant_figures(final_value, 4))
+        elif not series:  # Handle case where no steps have been added
+            series.append(round_to_significant_figures(final_value, 4))
+
+        return np.array(series)
+
     def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
-        pass
+        self.voltage_array = self._generate_series(initial_voltage, final_voltage)
+
+        # append return sweep voltages only for the initial array creation
+        if initial_call and self.return_sweep:
+            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]])
+            self.data_index_to_draw = 0  # index to draw of self.output_arr
+
+        self.n_measurement_points = len(self.voltage_array)
+        self.n_data_drawn = 0
 
     def _update_measurement_array(self, voltage, index, is_forced_return=False):
         # defined in each measurement

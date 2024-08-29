@@ -92,11 +92,11 @@ class LGADMeasurement(QDialog):
     def _init_gui_options(self, measurement_type):
 
         if measurement_type == MeasurementType.IV:
-            self.iv_gui.set(self.device_dict, "FBK", 0, -250, 1,
+            self.iv_gui.set(self.device_dict, "FBK", 0, -250, "1",
                             1e-5, True, True)
 
         elif measurement_type == MeasurementType.CV:
-            self.cv_gui.set(self.device_dict, "FBK", 0, -60, 1,
+            self.cv_gui.set(self.device_dict, "FBK", 0, -60, "1, (-20, -25, 0.1)",
                             1000, 0.1, True, True)
         else:
             print("Unknown measurement type")

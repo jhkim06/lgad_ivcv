@@ -1,13 +1,10 @@
 from drivers.Keithley6487 import Keithley6487
 from drivers.WayneKerr4300 import WayneKerr4300
 
-import os
 import sys
-import signal
 import numpy as np
 import time
-from util import make_unique_name
-from util import BaseThread
+from util import BaseThread, parse_voltage_steps
 from backend.MeasurementBackEnd import MeasurementBackend
 import matplotlib.pyplot as plt
 
@@ -26,8 +23,6 @@ class CVMeasurementBackend(MeasurementBackend):
         self.pau_visa_resource_name = pau_visa_resource_name
         self.initial_voltage = 0
         self.final_voltage = -60
-        self.right_end_voltage_for_steep_curve = -40  # -15, -40 (according to gain layer design)
-        self.left_end_voltage_for_steep_curve = -50  # -25, -50
         self.voltage_step = 1 
         self.data_points = -1
         self.ac_level = 0.1
@@ -68,10 +63,17 @@ class CVMeasurementBackend(MeasurementBackend):
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,
                                 ac_level, frequency, return_sweep, col_number, row_number, live_plot):
 
-        self.initial_voltage = initial_voltage  # TODO initial_voltage;left_end_voltage_for_steep_curve
-        self.final_voltage = final_voltage
+        try:
+            self.initial_voltage = initial_voltage
+            self.final_voltage = final_voltage
+            if self.initial_voltage > 0 or self.final_voltage > 0:
+                raise Exception('Positive voltages not allowed.')
+        except Exception as e:
+            print(e)
 
-        self.voltage_step = voltage_step
+        # print(voltage_step)
+        self.voltage_step, self.ranges_with_steps = parse_voltage_steps(voltage_step)
+        # print(self.voltage_step, self.ranges_with_steps)
         self.ac_level = ac_level
         self.frequency = frequency
         self.return_sweep = return_sweep
@@ -91,50 +93,6 @@ class CVMeasurementBackend(MeasurementBackend):
         print("WARNING: Please make sure the output is turned off!")
         # exit(1)
 
-    def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
-        # left_end_voltage, right_end_voltage
-        voltage_step = self.voltage_step 
-        decreasing_order = True
-        if initial_voltage > final_voltage:
-            left_end_voltage = final_voltage
-            right_end_voltage = initial_voltage
-            voltage_step = voltage_step * -1
-        else:
-            left_end_voltage = initial_voltage
-            right_end_voltage = final_voltage
-            decreasing_order = False
-
-        self.voltage_array = np.arange(initial_voltage, final_voltage, voltage_step)
-        if self.voltage_array[-1] != final_voltage:
-            self.voltage_array = np.append(self.voltage_array, [final_voltage])
-
-        self._add_voltage_array_for_steep_curve(right_end_voltage, left_end_voltage, decreasing_order)
-
-        if initial_call and self.return_sweep:
-            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]]) 
-            self.data_index_to_draw = 0
-
-        self.n_measurement_points = len(self.voltage_array)
-        self.n_data_drawn = 0
-
-    def _add_voltage_array_for_steep_curve(self, right_end_voltage, left_end_voltage, decreasing_order=True):
-        
-        # make array for steep curve region using np.union1d(x, y)
-        if self.right_end_voltage_for_steep_curve is not None and self.left_end_voltage_for_steep_curve is not None:
-            # check if the range for steep region is inside the original range
-            if left_end_voltage < self.left_end_voltage_for_steep_curve and right_end_voltage > self.right_end_voltage_for_steep_curve:
-                voltage_step_for_steep_curve = np.arange(
-                        self.left_end_voltage_for_steep_curve, 
-                        self.right_end_voltage_for_steep_curve, 
-                        self.voltage_step/2.)
-
-                if decreasing_order: 
-                    # arrange decreading order
-                    self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)[::-1]
-                else:
-                    # arrange increasing order
-                    self.voltage_array = np.union1d(self.voltage_array, voltage_step_for_steep_curve)
-
     def _update_measurement_array(self, voltage, index, is_forced_return=False):
 
         if voltage > 0:
@@ -150,7 +108,7 @@ class CVMeasurementBackend(MeasurementBackend):
         voltage_pau = float(voltage_pau)
         current_pau = float(current_pau[:-1])
 
-        res = self.lcr.read_lcr()
+        _ = self.lcr.read_lcr()
         capacitance, resistance = self.lcr.read_lcr().split(',')
         try:
             capacitance = float(capacitance)
@@ -164,10 +122,9 @@ class CVMeasurementBackend(MeasurementBackend):
         self.set_status_str(index, is_forced_return)
 
     def start_measurement(self):
+        self._make_voltage_array(self.initial_voltage, self.final_voltage)
         self.pau.set_current_limit(CURRENT_COMPLIANCE)
         # signal.signal(signal.SIGINT, self._safe_escaper)
-
-        self._make_voltage_array(self.initial_voltage, self.final_voltage)
 
         self.pau.set_voltage(0)
         self.pau.set_output('ON')
@@ -219,14 +176,8 @@ class CVMeasurementBackend(MeasurementBackend):
     def save_results(self):
         if self.resources_closed is False:
             # TODO use verbose level
-            if (self.right_end_voltage_for_steep_curve is not None) and (self.left_end_voltage_for_steep_curve is not None):
-                print(f"   * Bias sweep of {self.n_measurement_points} meas between {self.initial_voltage} "
-                      f"and {self.final_voltage} "
-                      f"with {self.n_measurement_points} meas "
-                      f"between {self.right_end_voltage_for_steep_curve} and {self.left_end_voltage_for_steep_curve}")
-            else:
-                print(f"   * Bias sweep of {self.n_measurement_points} meas "
-                      f"between {self.initial_voltage} and {self.final_voltage} ")
+            print(f"   * Bias sweep of {self.n_measurement_points} meas "
+                  f"between {self.initial_voltage} and {self.final_voltage} ")
             print(f"   * Return sweep: {self.return_sweep}")
 
             self.pau.set_output('OFF')

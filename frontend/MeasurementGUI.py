@@ -96,7 +96,7 @@ class MeasurementGUI:
         return int(self.line_edit_final_voltage.text())
 
     def get_voltage_step(self):
-        return int(self.line_edit_voltage_step.text())
+        return self.line_edit_voltage_step.text()
 
     def get_live_plot(self):
         return self.check_box_live_plot.isChecked()

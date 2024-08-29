@@ -1,10 +1,8 @@
-from typing import Tuple, Any
-
 from drivers.Keithley2400 import Keithley2400
 from drivers.Keithley6487 import Keithley6487
 import numpy as np
 import time
-from util import BaseThread
+from util import BaseThread, parse_voltage_steps
 from backend.MeasurementBackEnd import MeasurementBackend
 
 
@@ -57,9 +55,17 @@ class IVMeasurementBackend(MeasurementBackend):
 
     def set_measurement_options(self, initial_voltage, final_voltage, voltage_step,
                                 current_compliance, return_sweep, col_number, row_number, live_plot):
-        self.initial_voltage = initial_voltage
-        self.final_voltage = final_voltage
-        self.voltage_step = voltage_step
+        try:
+            self.initial_voltage = initial_voltage
+            self.final_voltage = final_voltage
+            if self.initial_voltage > 0 or self.final_voltage > 0:
+                raise Exception('Positive voltages not allowed.')
+        except Exception as e:
+            print(e)
+
+        # print(voltage_step)
+        self.voltage_step, self.ranges_with_steps = parse_voltage_steps(voltage_step)
+        # print(self.voltage_step, self.ranges_with_steps)
         self.current_compliance = current_compliance
         self.return_sweep = return_sweep
         self.live_plot = live_plot
@@ -76,23 +82,6 @@ class IVMeasurementBackend(MeasurementBackend):
         print("WARNING: Please make sure the output is turned off!")
         # exit(1)
 
-    def _make_voltage_array(self, initial_voltage, final_voltage, initial_call=True):
-        voltage_step = self.voltage_step
-        if initial_voltage > final_voltage:
-            voltage_step = voltage_step * -1
-
-        self.voltage_array = np.arange(initial_voltage, final_voltage, voltage_step)
-        if self.voltage_array[-1] != final_voltage:
-            self.voltage_array = np.append(self.voltage_array, [final_voltage])
-
-        # append return sweep voltages only for the initial array creation
-        if initial_call and self.return_sweep:
-            self.voltage_array = np.concatenate([self.voltage_array, self.voltage_array[::-1]])
-            self.data_index_to_draw = 0  # index to draw of self.output_arr 
-
-        self.n_measurement_points = len(self.voltage_array)
-        self.n_data_drawn = 0
-
     def _update_measurement_array(self, voltage, index, is_forced_return=False):
         self.smu.set_voltage(voltage)
         voltage_smu, current_smu = self.smu.read().split(',')
@@ -108,10 +97,10 @@ class IVMeasurementBackend(MeasurementBackend):
         self.set_status_str(index, is_forced_return)
 
     def start_measurement(self):
+        self._make_voltage_array(self.initial_voltage, self.final_voltage)
+        # print(self.voltage_array)
         self.smu.set_current_limit(self.current_compliance)
         # signal.signal(signal.SIGINT, self._safe_escaper)
-
-        self._make_voltage_array(self.initial_voltage, self.final_voltage)
 
         self.smu.set_voltage(0)
         self.smu.set_output('on')
