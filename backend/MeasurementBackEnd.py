@@ -121,8 +121,7 @@ class MeasurementBackend:
     def _reorder_ranges_with_steps(self, step_sign):
         normalized_ranges = []
         for start, end, step in self.ranges_with_steps:
-            if start > 0 or end > 0:
-                continue  # positive voltage is not allowed, so just ignore
+            if start > 0 or end > 
             if step_sign < 0:
                 step = -abs(step)
                 if start < end:
